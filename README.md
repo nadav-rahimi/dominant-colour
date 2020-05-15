@@ -4,6 +4,11 @@ Made in reference to [this](https://pdfs.semanticscholar.org/fc50/a3950d6ce54717
 ### Description
 Finds *n* most dominant colours in an image
 
+###### TODO
+- Implement [this](http://www.cs.joensuu.fi/sipu/pub/Threshold-JEI.pdf) algo
+- Figure out why too many colours causes program exit
+- Fix memory leak
+
 ### Important!!!
 The `FindDominantColoursBT()` method is quite slow for large images and contains memory leaks, please bear this in mind until they are resolved
 
