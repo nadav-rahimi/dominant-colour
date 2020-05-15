@@ -26,3 +26,6 @@ func main() {
 
 #### Output (8 Colours)
 ![example input](images/skin_render.jpeg)
+
+#### Colours Rectangle
+![rectangle](images/dominantcolours.png)
