@@ -13,6 +13,7 @@ Finds *n* most dominant colours in an image
 The `FindDominantColoursBT()` method is quite slow for large images and contains memory leaks, please bear this in mind until they are resolved
 
 ### Example Code
+#### Supplying Path
 ```go
 package main
 
@@ -28,6 +29,24 @@ func main() {
 }
 ```
 
+#### Supplying Pixel Set
+```go
+package main
+
+import dc "github.com/nadav-rahimi/dominant-colour"
+
+func main() {
+    // Get the pixel set
+    pixels := dc.Img2pixelset("path/to/image.jpg")
+    // Get the 6 most dominant colours from the image set
+    colours := dc.FindDominantColoursBTFromSet(pixels, 6)
+    // Draw a rectangle of these colours
+    dc.DrawRectangle(colours)
+    // Recreate the image using these colours
+    dc.RecreateImage("path/to/image.jpg", colours)
+}
+```
+
 ### Example Results
 #### Input
 ![example input](images/skin.jpg)
@@ -35,5 +54,5 @@ func main() {
 #### Output (8 Colours)
 ![example input](images/skin_render.jpeg)
 
-#### Colours Rectangle
+#### Dominant Colours Rectangle
 ![rectangle](images/dominantcolours.png)
