@@ -9,14 +9,16 @@ import (
 // Error checking function to reduce boilerplate code.
 // If boolean, false triggers an error, if error, it not
 // being equal to nil triggers an error
-func chkFatal (e interface{}) {
+func chkFatal(e interface{}, msg string) {
 	switch v := e.(type) {
 	case error:
 		if v != nil {
+			fmt.Println(msg)
 			log.Fatal(v)
 		}
 	case bool:
 		if v == false {
+			fmt.Println(msg)
 			log.Fatal(v)
 		}
 	}
