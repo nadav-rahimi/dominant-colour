@@ -297,7 +297,7 @@ func (t *tree_node) get_leaves() []*tree_node {
 
 // Find "n" most dominant colours with the path to the image given
 // Uses a custom binary tree
-func FindDominantColoursBT(path string, n int) []*RGB {
+func FindDominantColoursBasic(path string, n int) []*RGB {
 	root := newNode(Img2pixelset(path))
 	root.calculate_mean_and_covariance()
 
@@ -324,7 +324,7 @@ func FindDominantColoursBT(path string, n int) []*RGB {
 // the data into a set using the Img3pixelset function and then pass it
 // into this function which makes a copy of the set before calculating
 // the dominant colours leaving the original set untouched
-func FindDominantColoursBTFromSet(s *gs.Set, n int) []*RGB {
+func FindDominantColoursBasicFromSet(s *gs.Set, n int) []*RGB {
 	root := newNode(s)
 	root.calculate_mean_and_covariance()
 

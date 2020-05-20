@@ -1,13 +1,16 @@
 ## Dominant Colour
-Made in reference to [this](https://pdfs.semanticscholar.org/fc50/a3950d6ce54717b945079329069dcd8ccb7a.pdf) paper
+
+### Algorithms Implemented
+- [x] 1\. "Basic" [Colour Quantization in Images](https://pdfs.semanticscholar.org/fc50/a3950d6ce54717b945079329069dcd8ccb7a.pdf)
+- [ ] 2\. "FastOTSU"
+- [ ] 3\. "PNN"
 
 ### Description
 Finds *n* most dominant colours in an image
 
 ###### TODO
-- [ ] Implement [this](http://www.cs.joensuu.fi/sipu/pub/Threshold-JEI.pdf) algo
 - [x] Stop too many colours causes program exit
-- [ ] Fix memory leak
+- [ ] Fix memory leak for the first algorithm
 
 ### Important!!!
 The `FindDominantColoursBT()` method is quite slow for large images and contains memory leaks, please bear this in mind until they are resolved
