@@ -1,6 +1,7 @@
 package dominant_colour
 
 import (
+	"fmt"
 	golang_queues "github.com/nadav-rahimi/golang-queue"
 	gs "github.com/nadav-rahimi/golang-sets"
 	"gonum.org/v1/gonum/mat"
@@ -292,4 +293,56 @@ func (t *tree_node) get_leaves() []*tree_node {
 	}
 
 	return leaves[:len(leaves)-1]
+}
+
+// Find "n" most dominant colours with the path to the image given
+// Uses a custom binary tree
+func FindDominantColoursBT(path string, n int) []*RGB {
+	root := newNode(Img2pixelset(path))
+	root.calculate_mean_and_covariance()
+
+	for i := 0; i < n; i++ {
+		fmt.Printf("WORKING ON ITERATION: %v\n", i)
+		node := root.find_max_eigenvector()
+		node.calculate_mean_and_covariance()
+		node.partition_node()
+	}
+
+	colours := make([]*RGB, 0, n)
+	leaves := root.get_leaves()
+	for i := range leaves {
+		r := leaves[i].qn.At(0, 0)
+		g := leaves[i].qn.At(1, 0)
+		b := leaves[i].qn.At(2, 0)
+		colours = append(colours, &RGB{r, g, b})
+	}
+
+	return colours
+}
+
+// If you want to reuse the same pixel set multiple times you can read
+// the data into a set using the Img3pixelset function and then pass it
+// into this function which makes a copy of the set before calculating
+// the dominant colours leaving the original set untouched
+func FindDominantColoursBTFromSet(s *gs.Set, n int) []*RGB {
+	root := newNode(s)
+	root.calculate_mean_and_covariance()
+
+	for i := 0; i < n; i++ {
+		fmt.Printf("WORKING ON ITERATION: %v\n", i)
+		node := root.find_max_eigenvector()
+		node.calculate_mean_and_covariance()
+		node.partition_node()
+	}
+
+	colours := make([]*RGB, 0, n)
+	leaves := root.get_leaves()
+	for i := range leaves {
+		r := leaves[i].qn.At(0, 0)
+		g := leaves[i].qn.At(1, 0)
+		b := leaves[i].qn.At(2, 0)
+		colours = append(colours, &RGB{r, g, b})
+	}
+
+	return colours
 }
