@@ -1,24 +1,68 @@
 package dominant_colour
 
 import (
-	"fmt"
 	golang_queues "github.com/nadav-rahimi/golang-queue"
 	gs "github.com/nadav-rahimi/golang-sets"
 	"gonum.org/v1/gonum/mat"
 	"math"
 )
 
-// Calculates the magnitude of a vector
-func _3DVecMagnitude(v *mat.VecDense) float64 {
-	var total float64 = 0
-	total += math.Pow((v.AtVec(0)), 2)
-	total += math.Pow((v.AtVec(1)), 2)
-	total += math.Pow((v.AtVec(2)), 2)
-	return math.Sqrt(total)
+type BasicQuantizer struct{}
+
+// Find "n" most dominant colours with the path to the image given
+// Uses a custom binary tree
+func (bq *BasicQuantizer) MTC(path string, n int) []*RGB {
+	root := newNode(ImgToRGBPixels(path))
+	root.calculate_mean_and_covariance()
+
+	for i := 0; i < n; i++ {
+		//fmt.Printf("WORKING ON ITERATION: %v\n", i)
+		node := root.find_max_eigenvector()
+		node.calculate_mean_and_covariance()
+		node.partition_node()
+	}
+
+	colours := make([]*RGB, 0, n)
+	leaves := root.get_leaves()
+	for i := range leaves {
+		r := leaves[i].qn.At(0, 0)
+		g := leaves[i].qn.At(1, 0)
+		b := leaves[i].qn.At(2, 0)
+		colours = append(colours, &RGB{r, g, b})
+	}
+
+	return colours
+}
+
+// If you want to reuse the same pixel set multiple times you can read
+// the data into a set using the Img3pixelset function and then pass it
+// into this function which makes a copy of the set before calculating
+// the dominant colours leaving the original set untouched
+func (bq *BasicQuantizer) MTCFromSet(s *gs.Set, n int) []*RGB {
+	root := newNode(s)
+	root.calculate_mean_and_covariance()
+
+	for i := 0; i < n; i++ {
+		//fmt.Printf("WORKING ON ITERATION: %v\n", i)
+		node := root.find_max_eigenvector()
+		node.calculate_mean_and_covariance()
+		node.partition_node()
+	}
+
+	colours := make([]*RGB, 0, n)
+	leaves := root.get_leaves()
+	for i := range leaves {
+		r := leaves[i].qn.At(0, 0)
+		g := leaves[i].qn.At(1, 0)
+		b := leaves[i].qn.At(2, 0)
+		colours = append(colours, &RGB{r, g, b})
+	}
+
+	return colours
 }
 
 // Binary tree node used for the calculating the dominant colour
-type tree_node struct {
+type basic_tree_node struct {
 	// Mean - Qn
 	qn *mat.Dense
 	// Covariance - Rn (with squiggly line over R)
@@ -34,14 +78,14 @@ type tree_node struct {
 	rn_s *mat.Dense
 
 	// Left node of the binary tree
-	left *tree_node
+	left *basic_tree_node
 	// Right node of the binary tree
-	right *tree_node
+	right *basic_tree_node
 }
 
 // Returns a new tree node with a given pixel set
-func newNode(pixels *gs.Set) *tree_node {
-	return &tree_node{
+func newNode(pixels *gs.Set) *basic_tree_node {
+	return &basic_tree_node{
 		qn:     mat.NewDense(3, 1, nil),
 		rn:     mat.NewSymDense(3, nil),
 		nn:     pixels.Size(),
@@ -53,14 +97,23 @@ func newNode(pixels *gs.Set) *tree_node {
 	}
 }
 
+// Calculates the magnitude of a vector
+func _3DVecMagnitude(v *mat.VecDense) float64 {
+	var total float64 = 0
+	total += math.Pow((v.AtVec(0)), 2)
+	total += math.Pow((v.AtVec(1)), 2)
+	total += math.Pow((v.AtVec(2)), 2)
+	return math.Sqrt(total)
+}
+
 // Wrapper for the mean and covariance functions to ensure one is called after the other
-func (t *tree_node) calculate_mean_and_covariance() {
+func (t *basic_tree_node) calculate_mean_and_covariance() {
 	t._calculate_mean()
 	t._calculate_covariance()
 }
 
 // Calculates the mean of the tree node
-func (t *tree_node) _calculate_mean() {
+func (t *basic_tree_node) _calculate_mean() {
 	// Calculates Mn
 	t.mn.Zero()
 	for _, v := range t.pixels.List() {
@@ -75,7 +128,7 @@ func (t *tree_node) _calculate_mean() {
 }
 
 // Calculates the covariance of the tree node
-func (t *tree_node) _calculate_covariance() {
+func (t *basic_tree_node) _calculate_covariance() {
 	// Calculating Rn (no squiggly line)
 	var multi mat.Dense
 	t.rn_s.Zero()
@@ -109,7 +162,7 @@ func (t *tree_node) _calculate_covariance() {
 }
 
 // Calculates the largest eigenvector of the node, returns the vector and its value
-func (t *tree_node) _calculate_max_eigenvector() (*mat.VecDense, float64) {
+func (t *basic_tree_node) _calculate_max_eigenvector() (*mat.VecDense, float64) {
 	// NaN indicates the node has zero pixels so the eigen value cannot be calculated
 	if math.IsNaN(t.rn.At(0, 0)) {
 		return mat.NewVecDense(3, nil), 0
@@ -155,7 +208,7 @@ func (t *tree_node) _calculate_max_eigenvector() (*mat.VecDense, float64) {
 }
 
 // Called on the root node, splits the node in the root's tree with the largest eigenvector
-func (t *tree_node) partition_node() {
+func (t *basic_tree_node) partition_node() {
 	set1 := gs.NewSet()
 	set2 := gs.NewSet()
 
@@ -193,7 +246,7 @@ func (t *tree_node) partition_node() {
 
 // Instead of fully calculating the mean and covariance of the right node, the relation
 // is applied to make the program more efficient
-func (t *tree_node) applyRelation() {
+func (t *basic_tree_node) applyRelation() {
 	// Calculating rn non squiggly
 	t.right.rn_s.Sub(t.rn_s, t.left.rn_s)
 
@@ -228,15 +281,15 @@ func (t *tree_node) applyRelation() {
 }
 
 // Finds the node with the largest eigenvector in the root tree (call on the root)
-func (t *tree_node) find_max_eigenvector() *tree_node {
+func (t *basic_tree_node) find_max_eigenvector() *basic_tree_node {
 	q := golang_queues.New()
 	q.Enqueue(t)
 
 	var max_value float64
-	var max_node *tree_node
+	var max_node *basic_tree_node
 	for q.Len() > 0 {
 		front := q.Front().Value
-		node, ok := front.(*tree_node)
+		node, ok := front.(*basic_tree_node)
 		chkFatal(ok, "retrieving front of queue when finding max eigen vector not working")
 
 		var val float64
@@ -268,15 +321,15 @@ func (t *tree_node) find_max_eigenvector() *tree_node {
 }
 
 // Returns all leaaves in the nodes tree
-func (t *tree_node) get_leaves() []*tree_node {
+func (t *basic_tree_node) get_leaves() []*basic_tree_node {
 	q := golang_queues.New()
 	q.Enqueue(t)
 
-	leaves := make([]*tree_node, 0, 5)
+	leaves := make([]*basic_tree_node, 0, 5)
 
 	for q.Len() > 0 {
 		front := q.Front().Value
-		node, ok := front.(*tree_node)
+		node, ok := front.(*basic_tree_node)
 		chkFatal(ok, "retrieving front of queue when finding leaves not working")
 
 		if node.left != nil {
@@ -293,56 +346,4 @@ func (t *tree_node) get_leaves() []*tree_node {
 	}
 
 	return leaves[:len(leaves)-1]
-}
-
-// Find "n" most dominant colours with the path to the image given
-// Uses a custom binary tree
-func FindDominantColoursBasic(path string, n int) []*RGB {
-	root := newNode(Img2pixelset(path))
-	root.calculate_mean_and_covariance()
-
-	for i := 0; i < n; i++ {
-		fmt.Printf("WORKING ON ITERATION: %v\n", i)
-		node := root.find_max_eigenvector()
-		node.calculate_mean_and_covariance()
-		node.partition_node()
-	}
-
-	colours := make([]*RGB, 0, n)
-	leaves := root.get_leaves()
-	for i := range leaves {
-		r := leaves[i].qn.At(0, 0)
-		g := leaves[i].qn.At(1, 0)
-		b := leaves[i].qn.At(2, 0)
-		colours = append(colours, &RGB{r, g, b})
-	}
-
-	return colours
-}
-
-// If you want to reuse the same pixel set multiple times you can read
-// the data into a set using the Img3pixelset function and then pass it
-// into this function which makes a copy of the set before calculating
-// the dominant colours leaving the original set untouched
-func FindDominantColoursBasicFromSet(s *gs.Set, n int) []*RGB {
-	root := newNode(s)
-	root.calculate_mean_and_covariance()
-
-	for i := 0; i < n; i++ {
-		fmt.Printf("WORKING ON ITERATION: %v\n", i)
-		node := root.find_max_eigenvector()
-		node.calculate_mean_and_covariance()
-		node.partition_node()
-	}
-
-	colours := make([]*RGB, 0, n)
-	leaves := root.get_leaves()
-	for i := range leaves {
-		r := leaves[i].qn.At(0, 0)
-		g := leaves[i].qn.At(1, 0)
-		b := leaves[i].qn.At(2, 0)
-		colours = append(colours, &RGB{r, g, b})
-	}
-
-	return colours
 }
