@@ -1,16 +1,19 @@
-package images
+package quantisers
 
-import "image"
+import (
+	"image"
+)
 
-type GreyscaleHistogram map[uint8]int
+type Histogram map[uint8]int
 
-type ColourHistogram map[colour]int
+// TODO use this histogram in the Colour methods
+//type ColourHistogram map[Colour]int
 
-func CreateGreyscaleHistogram(img image.Image) GreyscaleHistogram {
+func CreateGreyscaleHistogram(img image.Image) Histogram {
 	bounds := img.Bounds()
 	width, height := bounds.Max.X, bounds.Max.Y
 
-	pixels := make(GreyscaleHistogram)
+	pixels := make(Histogram)
 	for y := bounds.Min.Y; y < height; y++ {
 		for x := bounds.Min.X; x < width; x++ {
 			r, g, b, _ := img.At(x, y).RGBA()
@@ -28,14 +31,14 @@ func CreateGreyscaleHistogram(img image.Image) GreyscaleHistogram {
 	return pixels
 }
 
-func CreateRGBAHistogram(img image.Image) (rhist, ghist, bhist, ahist GreyscaleHistogram) {
+func CreateRGBAHistogram(img image.Image) (rhist, ghist, bhist, ahist Histogram) {
 	bounds := img.Bounds()
 	width, height := bounds.Max.X, bounds.Max.Y
 
-	r_pixels := make(GreyscaleHistogram)
-	g_pixels := make(GreyscaleHistogram)
-	b_pixels := make(GreyscaleHistogram)
-	a_pixels := make(GreyscaleHistogram)
+	r_pixels := make(Histogram)
+	g_pixels := make(Histogram)
+	b_pixels := make(Histogram)
+	a_pixels := make(Histogram)
 	for y := bounds.Min.Y; y < height; y++ {
 		for x := bounds.Min.X; x < width; x++ {
 			r, g, b, a := img.At(x, y).RGBA()

@@ -1,24 +1,19 @@
-package quantisers
+package LMQ
 
 import (
-	"errors"
-	"github.com/nadav-rahimi/dominant-colour/pkg/images"
+	q "github.com/nadav-rahimi/dominant-colour/internal/quantisers"
 	"image"
 	"image/color"
 	"sync"
 )
 
-// TODO Correct error message
-
-type LMQ struct{}
-
-func (lmq LMQ) Greyscale(img image.Image, m int) ([]color.Gray, error) {
-	histogram := images.CreateGreyscaleHistogram(img)
+func Greyscale(img image.Image, m int) (color.Palette, error) {
+	histogram := q.CreateGreyscaleHistogram(img)
 	ychan := make(chan []int)
-	go lmq.multilevelThreshold(histogram, m, ychan, nil)
+	go multilevelThreshold(histogram, m, ychan, nil)
 	T := <-ychan
 
-	colours := make([]color.Gray, len(T))
+	colours := make([]color.Color, len(T))
 	for i := range colours {
 		colours[i] = color.Gray{uint8(T[i])}
 	}
@@ -26,12 +21,8 @@ func (lmq LMQ) Greyscale(img image.Image, m int) ([]color.Gray, error) {
 	return colours, nil
 }
 
-func (lmq LMQ) Colour(img image.Image, m int) ([]color.RGBA, error) {
-	if m > 1 {
-		return nil, errors.New("For 'm > 1' this function is not implemented due to memory constraints")
-	}
-
-	rhist, ghist, bhist, ahist := images.CreateRGBAHistogram(img)
+func Colour(img image.Image) (color.Palette, error) {
+	rhist, ghist, bhist, ahist := q.CreateRGBAHistogram(img)
 
 	rchan := make(chan []int)
 	gchan := make(chan []int)
@@ -41,10 +32,10 @@ func (lmq LMQ) Colour(img image.Image, m int) ([]color.RGBA, error) {
 	var wg sync.WaitGroup
 	wg.Add(4)
 
-	go lmq.multilevelThreshold(rhist, m, rchan, &wg)
-	go lmq.multilevelThreshold(ghist, m, gchan, &wg)
-	go lmq.multilevelThreshold(bhist, m, bchan, &wg)
-	go lmq.multilevelThreshold(ahist, m, achan, &wg)
+	go multilevelThreshold(rhist, 1, rchan, &wg)
+	go multilevelThreshold(ghist, 1, gchan, &wg)
+	go multilevelThreshold(bhist, 1, bchan, &wg)
+	go multilevelThreshold(ahist, 1, achan, &wg)
 
 	Tr := <-rchan
 	Tg := <-gchan
@@ -53,7 +44,7 @@ func (lmq LMQ) Colour(img image.Image, m int) ([]color.RGBA, error) {
 
 	wg.Wait()
 
-	colours := make([]color.RGBA, len(Tr))
+	colours := make([]color.Color, len(Tr))
 	for i := range colours {
 		colours[i] = color.RGBA{uint8(Tr[i]), uint8(Tg[i]), uint8(Tb[i]), uint8(Ta[i])}
 	}
@@ -61,7 +52,7 @@ func (lmq LMQ) Colour(img image.Image, m int) ([]color.RGBA, error) {
 	return colours, nil
 }
 
-func (lmq LMQ) multilevelThreshold(hist images.GreyscaleHistogram, m int, c chan []int, wg *sync.WaitGroup) {
+func multilevelThreshold(hist q.Histogram, m int, c chan []int, wg *sync.WaitGroup) {
 	xMax := 255
 	xMin := 0
 
@@ -71,9 +62,9 @@ func (lmq LMQ) multilevelThreshold(hist images.GreyscaleHistogram, m int, c chan
 		T[i] = uint8(xMin + (i*(xMax-xMin))/m)
 	}
 	// Initialising the segment map
-	segments := make(map[int]images.GreyscaleHistogram)
+	segments := make(map[int]q.Histogram)
 	for i := 1; i <= m; i++ {
-		segments[i] = images.GreyscaleHistogram{}
+		segments[i] = q.Histogram{}
 	}
 	// Initialising the averages for each segment
 	averages := make(map[int]int)
@@ -129,7 +120,7 @@ func (lmq LMQ) multilevelThreshold(hist images.GreyscaleHistogram, m int, c chan
 	c <- averagesToReturn
 }
 
-func mean(h images.GreyscaleHistogram) int {
+func mean(h q.Histogram) int {
 	sum := 0
 	total := 0
 
