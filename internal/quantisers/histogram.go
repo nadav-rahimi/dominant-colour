@@ -6,9 +6,6 @@ import (
 
 type Histogram map[uint8]int
 
-// TODO use this histogram in the Colour methods
-//type ColourHistogram map[Colour]int
-
 func CreateGreyscaleHistogram(img image.Image) Histogram {
 	bounds := img.Bounds()
 	width, height := bounds.Max.X, bounds.Max.Y

@@ -5,7 +5,6 @@ import (
 	"image"
 	"image/jpeg"
 	"image/png"
-	"log"
 	"os"
 	"strings"
 )
@@ -37,7 +36,7 @@ func PNGCompressionLevel(level CompressionLevel) (png.CompressionLevel, error) {
 func ReadImage(path string) (image.Image, error) {
 	reader, err := os.Open(path)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	defer reader.Close()
 
