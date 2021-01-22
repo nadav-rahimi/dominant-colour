@@ -38,6 +38,10 @@ func (h *Heap) Pop() interface{} {
 	return item
 }
 
+func (h *Heap) Front() interface{} {
+	return (*h)[0]
+}
+
 // update modifies the priority (the merge cost value) of an Item in the queue.
 func (h *Heap) Update(node *Node, d float64) {
 	node.D = d

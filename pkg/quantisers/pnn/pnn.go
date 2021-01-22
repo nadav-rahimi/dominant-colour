@@ -11,9 +11,9 @@ import (
 )
 
 func Greyscale(img image.Image, m int) (color.Palette, error) {
-	bin := q.CreateGreyscaleBin(img)
+	hist := q.CreateGreyscaleHistogram(img)
 	ychan := make(chan []int)
-	go threshold(bin, m, ychan, nil)
+	go threshold(hist, m, ychan, nil)
 	T := <-ychan
 
 	colours := make([]color.Color, len(T))
@@ -24,30 +24,29 @@ func Greyscale(img image.Image, m int) (color.Palette, error) {
 	return colours, nil
 }
 
-func threshold(bin q.Bin, M int, c chan []int, wg *sync.WaitGroup) {
-	_, H := initialise(bin)
+func threshold(hist q.Histogram, M int, c chan []int, wg *sync.WaitGroup) {
+	S, H := initialise(hist)
 
-	//for S, _ = initialise(bin); S != nil; S = S.Next {
+	//cnt := 0
+	//for S, _ = initialise(hist); S != nil; S = S.Next {
 	//	fmt.Printf("%+v\n", S)
+	//	cnt++
 	//}
+	//fmt.Println(cnt, H.Len())
 
-	m := len(bin) // TODO set this to length of S or lengh of heap if quicker?
+	m := H.Len() + 1
 	for m != M {
-		sa := heap.Pop(H).(*pnn.Node)
+		sa := H.Front().(*pnn.Node)
 		sb := sa.Next
-		heap.Push(H, sa) // Need to push it back on because we do not want to change the list yet
-
-		//fmt.Printf("%+v, %+v\n", sa, sb)
-
-		merge(sa, sb)
+		//fmt.Printf("%v %v-   %+v, %+v\n", m, H.Len(), sa, sb)
 		updateDataStructs(sa, sb, H)
 		m = m - 1
 	}
 
 	thresholds := make([]int, 0, M)
-	for H.Len() > 0 {
-		node := heap.Pop(H).(*pnn.Node)
-		thresholds = append(thresholds, int(node.T))
+	for S != nil {
+		thresholds = append(thresholds, int(S.C))
+		S = S.Next
 	}
 	sort.Ints(thresholds)
 
@@ -59,7 +58,7 @@ func threshold(bin q.Bin, M int, c chan []int, wg *sync.WaitGroup) {
 
 }
 
-func initialise(bin q.Bin) (*pnn.Node, *pnn.Heap) {
+func initialise(hist q.Histogram) (*pnn.Node, *pnn.Heap) {
 	// Initialise Heap
 	h := make(pnn.Heap, 0)
 	heap.Init(&h)
@@ -69,51 +68,46 @@ func initialise(bin q.Bin) (*pnn.Node, *pnn.Heap) {
 	var currentNode *pnn.Node
 	var previousNode *pnn.Node
 
-	// Initialise the head separately since its previous node will be nil
-	head = &pnn.Node{
-		Prev: nil,
-		C:    0,
-		T:    0,
-		D:    -1,
-		N:    float64(bin[0]),
+	keys := make([]int, 0)
+	for k, _ := range hist {
+		keys = append(keys, int(k))
 	}
-	heap.Push(&h, head)
-	previousNode = head
+	sort.Ints(keys)
 
-	//fmt.Println(len(bin))
-	for k, v := range bin {
-		if k == 0 {
-			continue
-		}
-
+	previousNode = nil
+	for i, k := range keys {
 		// Create a new node
 		currentNode = &pnn.Node{
-			Prev: previousNode,
-			C:    float64(k),
-			T:    float64(k),
-			D:    -1,
-			N:    float64(v),
+			Prev:  previousNode,
+			C:     float64(k),
+			T:     uint8(k),
+			D:     -1,
+			N:     float64(hist[uint8(k)]),
+			Index: -1,
 		}
 
-		// Add the node to the list and calculate its cost
-		previousNode.Next = currentNode
-		previousNode.D = pnn.Cost(previousNode, currentNode)
+		if i == 0 {
+			head = currentNode
+		}
 
-		// Add the current node to the heap
-		heap.Push(&h, currentNode)
+		if previousNode != nil {
+			// Add the node to the list and calculate its cost
+			previousNode.Next = currentNode
+			previousNode.D = pnn.Cost(previousNode, currentNode)
+
+			// Add the previous node to the heap
+			heap.Push(&h, previousNode)
+		}
 
 		// Make the current node the next previous node
 		previousNode = currentNode
 	}
 
-	// TODO TEST FIX
-	head.Prev = previousNode
-	previousNode.Next = head
-
 	return head, &h
 }
 
-func merge(a, b *pnn.Node) {
+func updateDataStructs(a, b *pnn.Node, h *pnn.Heap) {
+	// Combine the data from B into A
 	Nq := a.N + b.N
 	Cq := (a.N*a.C + b.N*b.C) / Nq
 	Tq := b.T
@@ -121,22 +115,33 @@ func merge(a, b *pnn.Node) {
 	a.N = Nq
 	a.C = Cq
 	a.T = Tq
-}
 
-func updateDataStructs(a, b *pnn.Node, h *pnn.Heap) {
-	// Remove the second element from the linked list
-	a.Next = b.Next
-	b.Next.Prev = a
+	// If A is the penultimate element then its next must be set to nil
+	// Otherwise remove B from the linked list
+	if b.Next == nil {
+		a.Next = nil
+	} else {
+		a.Next = b.Next
+		b.Next.Prev = a
+	}
 
-	// Recalculate the MSE costs
-	a.Prev.D = pnn.Cost(a.Prev, a)
-	a.D = pnn.Cost(a, a.Next)
+	// Recalculate the MSE costs and update their locations in the heap with the new cost
+	if a.Prev != nil {
+		APrevCost := pnn.Cost(a.Prev, a)
+		h.Update(a.Prev, APrevCost)
+	}
+	if a.Next != nil {
+		ACost := pnn.Cost(a, a.Next)
+		h.Update(a, ACost)
+	}
 
-	// Remove the second element from the heap
-	//fmt.Println(b.Index)
-	_ = heap.Remove(h, b.Index)
+	// Remove the second element from the heap if its in the heap
+	if b.Index >= 0 && b.Index < h.Len() {
+		_ = heap.Remove(h, b.Index)
+	}
 
-	// Update the locations in the heap of the elements with the new cost
-	h.Update(a.Prev, a.Prev.D)
-	h.Update(a, a.D)
+	// Remove element from heap if its at the end of the list
+	if a.Next == nil {
+		_ = heap.Remove(h, a.Index)
+	}
 }

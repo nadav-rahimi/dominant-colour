@@ -12,4 +12,6 @@ Implementing algorithms as described in *Virmajoki, O., & Franti, P. (2003). Mul
 Finds *n* most dominant colours in an image
 
 ###### TODO
-- a lot
+- [ ] finish pnn
+- [ ] use lab colourspace
+- [ ] clean up api 
