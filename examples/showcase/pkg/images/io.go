@@ -54,6 +54,8 @@ func SaveImage(path string, img image.Image, cls ...CompressionLevel) error {
 	var cl CompressionLevel
 	if len(cls) > 0 {
 		cl = cls[0]
+	} else {
+		cl = DefaultCompression
 	}
 
 	var encodeMethod int

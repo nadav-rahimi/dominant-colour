@@ -27,19 +27,10 @@ func Greyscale(img image.Image, m int) (color.Palette, error) {
 func threshold(hist q.Histogram, M int, c chan []int, wg *sync.WaitGroup) {
 	S, H := initialise(hist)
 
-	//cnt := 0
-	//for S, _ = initialise(hist); S != nil; S = S.Next {
-	//	fmt.Printf("%+v\n", S)
-	//	cnt++
-	//}
-	//fmt.Println(cnt, H.Len())
-
 	m := H.Len() + 1
 	for m != M {
 		sa := H.Front().(*pnn.Node)
-		sb := sa.Next
-		//fmt.Printf("%v %v-   %+v, %+v\n", m, H.Len(), sa, sb)
-		updateDataStructs(sa, sb, H)
+		updateDataStructs(sa, sa.Next, H)
 		m = m - 1
 	}
 
@@ -93,7 +84,7 @@ func initialise(hist q.Histogram) (*pnn.Node, *pnn.Heap) {
 		if previousNode != nil {
 			// Add the node to the list and calculate its cost
 			previousNode.Next = currentNode
-			previousNode.D = pnn.Cost(previousNode, currentNode)
+			previousNode.D = pnn.LinearCost(previousNode, currentNode)
 
 			// Add the previous node to the heap
 			heap.Push(&h, previousNode)
@@ -127,11 +118,11 @@ func updateDataStructs(a, b *pnn.Node, h *pnn.Heap) {
 
 	// Recalculate the MSE costs and update their locations in the heap with the new cost
 	if a.Prev != nil {
-		APrevCost := pnn.Cost(a.Prev, a)
+		APrevCost := pnn.LinearCost(a.Prev, a)
 		h.Update(a.Prev, APrevCost)
 	}
 	if a.Next != nil {
-		ACost := pnn.Cost(a, a.Next)
+		ACost := pnn.LinearCost(a, a.Next)
 		h.Update(a, ACost)
 	}
 

@@ -37,9 +37,18 @@ func main() {
 		img = randomImage()
 	}
 
-	OtsuExample()
-	LMQExample()
-	PNNExample()
+	// Greyscale Image Single Tone
+	colours, err = PNN.Colour(img, *multi)
+	logErr(err)
+	quantisedImg, err = quantisers.ImageFromPalette(img, colours)
+	logErr(err)
+	palette = quantisers.ColourPalette(colours, 200)
+	logErr(images.SaveImage("pnn-colour-multi.png", quantisedImg, images.BestSpeed))
+	logErr(images.SaveImage("pnn-colour-multi-palette.png", palette, images.BestSpeed))
+
+	//OtsuExample()
+	//LMQExample()
+	//PNNExample()
 }
 
 func OtsuExample() {
