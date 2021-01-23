@@ -1,48 +1,33 @@
 package Otsu
 
 import (
-	q "github.com/nadav-rahimi/dominant-colour/internal/quantisers"
+	"errors"
+	q "github.com/nadav-rahimi/dominant-colour/internal/general"
 	"image"
 	"image/color"
 	"sync"
 )
 
-func Greyscale(img image.Image) (color.Palette, error) {
+type Otsu struct{}
+
+func (otsu Otsu) Greyscale(img image.Image, m int) (color.Palette, error) {
+	if m > 1 {
+		return nil, errors.New("Otsu does not support greyscale quantisation with m > 1")
+	}
+
 	histogram := q.CreateGreyscaleHistogram(img)
 	ychan := make(chan int)
-	go bilevelThreshold(histogram, ychan, nil)
+	go quantise(histogram, ychan, nil)
 	T := <-ychan
 
 	return color.Palette{color.Gray{uint8(T)}}, nil
 }
 
-func Colour(img image.Image) (color.Palette, error) {
-	rhist, ghist, bhist, ahist := q.CreateRGBAHistogram(img)
-
-	rchan := make(chan int)
-	gchan := make(chan int)
-	bchan := make(chan int)
-	achan := make(chan int)
-
-	var wg sync.WaitGroup
-	wg.Add(4)
-
-	go bilevelThreshold(rhist, rchan, &wg)
-	go bilevelThreshold(ghist, gchan, &wg)
-	go bilevelThreshold(bhist, bchan, &wg)
-	go bilevelThreshold(ahist, achan, &wg)
-
-	Tr := <-rchan
-	Tg := <-gchan
-	Tb := <-bchan
-	Ta := <-achan
-
-	wg.Wait()
-
-	return color.Palette{color.RGBA{uint8(Tr), uint8(Tg), uint8(Tb), uint8(Ta)}}, nil
+func (otsu Otsu) Colour(img image.Image, m int) (color.Palette, error) {
+	return nil, errors.New("Otsu does not support colour quantisation")
 }
 
-func bilevelThreshold(hist q.Histogram, c chan int, wg *sync.WaitGroup) {
+func quantise(hist q.Histogram, c chan int, wg *sync.WaitGroup) {
 	xMax := 256
 	P := make([]int, xMax)
 	S := make([]int, xMax)

@@ -1,4 +1,4 @@
-package pnn
+package PNN
 
 import (
 	_ "fmt"
@@ -35,5 +35,5 @@ func VectorCost(a, b *Node) float64 {
 	lhs := (a.N * b.N) / (a.N + b.N)
 	rhs := Sqr(b.A-a.A) + Sqr(b.R-a.R) + Sqr(b.G-a.G) + Sqr(b.B-a.B)
 
-	return lhs * float64(rhs)
+	return lhs * rhs
 }

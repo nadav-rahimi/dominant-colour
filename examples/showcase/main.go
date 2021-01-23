@@ -5,9 +5,6 @@ import (
 	"fmt"
 	"github.com/nadav-rahimi/dominant-colour/examples/showcase/pkg/images"
 	"github.com/nadav-rahimi/dominant-colour/pkg/quantisers"
-	LMQ "github.com/nadav-rahimi/dominant-colour/pkg/quantisers/lmq"
-	Otsu "github.com/nadav-rahimi/dominant-colour/pkg/quantisers/otsu"
-	PNN "github.com/nadav-rahimi/dominant-colour/pkg/quantisers/pnn"
 	"image"
 	"image/color"
 	"image/jpeg"
@@ -15,7 +12,7 @@ import (
 	"net/http"
 )
 
-// TODO add readme and .gitkeep and a go mod file
+// TODO add readme and .gitkeep + attribution for image
 
 var (
 	multi        *int
@@ -37,25 +34,19 @@ func main() {
 		img = randomImage()
 	}
 
-	// Greyscale Image Single Tone
-	colours, err = PNN.Colour(img, *multi)
-	logErr(err)
-	quantisedImg, err = quantisers.ImageFromPalette(img, colours)
-	logErr(err)
-	palette = quantisers.ColourPalette(colours, 200)
-	logErr(images.SaveImage("pnn-colour-multi.png", quantisedImg, images.BestSpeed))
-	logErr(images.SaveImage("pnn-colour-multi-palette.png", palette, images.BestSpeed))
-
-	//OtsuExample()
-	//LMQExample()
-	//PNNExample()
+	OtsuExample()
+	LMQExample()
+	PNNExample()
 }
 
 func OtsuExample() {
 	fmt.Println("Creating Otsu...")
 
+	// Creating the Otsu Quantiser
+	Otsu := quantisers.NewOtsuQuantiser()
+
 	// Greyscale Image
-	colours, err = Otsu.Greyscale(img)
+	colours, err = Otsu.Greyscale(img, 1)
 	logErr(err)
 	quantisedImg, err = quantisers.ImageFromPalette(img, colours)
 	logErr(err)
@@ -63,20 +54,14 @@ func OtsuExample() {
 	logErr(images.SaveImage("otsu-greyscale-single.png", quantisedImg, images.BestSpeed))
 	logErr(images.SaveImage("otsu-greyscale-single-palette.png", palette, images.BestSpeed))
 
-	// Colour Image
-	colours, err = Otsu.Colour(img)
-	logErr(err)
-	quantisedImg, err = quantisers.ImageFromPalette(img, colours)
-	logErr(err)
-	palette = quantisers.ColourPalette(colours, 200)
-	logErr(images.SaveImage("otsu-colour-single.png", quantisedImg, images.BestSpeed))
-	logErr(images.SaveImage("otsu-colour-single-palette.png", palette, images.BestSpeed))
-
 	fmt.Println("Finished Otsu")
 }
 
 func PNNExample() {
 	fmt.Println("Creating PNN...")
+
+	// Creating the PNN Quantiser
+	PNN := quantisers.NewPNNQuantiser()
 
 	// Greyscale Image Single Tone
 	colours, err = PNN.Greyscale(img, 1)
@@ -96,11 +81,32 @@ func PNNExample() {
 	logErr(images.SaveImage("pnn-greyscale-multi.png", quantisedImg, images.BestSpeed))
 	logErr(images.SaveImage("pnn-greyscale-multi-palette.png", palette, images.BestSpeed))
 
+	// Colour Image Single Tone
+	colours, err = PNN.Colour(img, 1)
+	logErr(err)
+	quantisedImg, err = quantisers.ImageFromPalette(img, colours)
+	logErr(err)
+	palette = quantisers.ColourPalette(colours, 200)
+	logErr(images.SaveImage("pnn-colour-single.png", quantisedImg, images.BestSpeed))
+	logErr(images.SaveImage("pnn-colour-single-palette.png", palette, images.BestSpeed))
+
+	// Colour Image Single Tone
+	colours, err = PNN.Colour(img, *multi)
+	logErr(err)
+	quantisedImg, err = quantisers.ImageFromPalette(img, colours)
+	logErr(err)
+	palette = quantisers.ColourPalette(colours, 200)
+	logErr(images.SaveImage("pnn-colour-multi.png", quantisedImg, images.BestSpeed))
+	logErr(images.SaveImage("pnn-colour-multi-palette.png", palette, images.BestSpeed))
+
 	fmt.Println("Finished PNN")
 }
 
 func LMQExample() {
 	fmt.Println("Creating LMQ...")
+
+	// Creating the LMQ Quantiser
+	LMQ := quantisers.NewLMQQuantiser()
 
 	// Greyscale Image Single Tone
 	colours, err = LMQ.Greyscale(img, 1)
@@ -119,15 +125,6 @@ func LMQExample() {
 	palette = quantisers.ColourPalette(colours, 200)
 	logErr(images.SaveImage("lmq-greyscale-multi.png", quantisedImg, images.BestSpeed))
 	logErr(images.SaveImage("lmq-greyscale-multi-palette.png", palette, images.BestSpeed))
-
-	// Colour Image
-	colours, err = LMQ.Colour(img)
-	logErr(err)
-	quantisedImg, err = quantisers.ImageFromPalette(img, colours)
-	logErr(err)
-	palette = quantisers.ColourPalette(colours, 200)
-	logErr(images.SaveImage("lmq-colour-single.png", quantisedImg, images.BestSpeed))
-	logErr(images.SaveImage("lmq-colour-single-palette.png", palette, images.BestSpeed))
 
 	fmt.Println("Finished LMQ")
 }

@@ -1,6 +1,4 @@
-package pnn
-
-// Adapted from https://golang.org/pkg/container/heap/
+package PNN
 
 import "container/heap"
 
@@ -42,7 +40,6 @@ func (h *Heap) Front() interface{} {
 	return (*h)[0]
 }
 
-// update modifies the priority (the merge cost value) of an Item in the queue.
 func (h *Heap) Update(node *Node, d float64) {
 	node.D = d
 	heap.Fix(h, node.Index)

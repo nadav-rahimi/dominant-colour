@@ -9,6 +9,7 @@ Implementing algorithms as described in *Virmajoki, O., & Franti, P. (2003). Mul
 - [x] 1\. "FastOTSU"
 - [x] 2\. "Lloyd Max Quantiser"
 - [ ] 3\. "PNN"
+- [ ] 4\. "Octree"
 
 ### Description
 Finds *n* most dominant colours in an image
@@ -18,3 +19,4 @@ Finds *n* most dominant colours in an image
 - [ ] use lab colourspace
 - [ ] clean up api
 - [ ] change description of repo
+- [ ] weighted colour values 

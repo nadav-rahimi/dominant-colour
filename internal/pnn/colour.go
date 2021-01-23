@@ -2,8 +2,6 @@ package PNN
 
 import (
 	"container/heap"
-	"fmt"
-	"github.com/nadav-rahimi/dominant-colour/internal/quantisers/pnn"
 	"image"
 	"image/color"
 	"math"
@@ -11,44 +9,33 @@ import (
 	"sync"
 )
 
-func Colour(img image.Image, m int) (color.Palette, error) {
-	hist := pnn.CreatePNNHistogram(img)
+func (pnn *PNN) Colour(img image.Image, m int) (color.Palette, error) {
+	hist := CreatePNNHistogram(img)
 	ychan := make(chan color.Palette)
-	go colourthreshold(hist, m, ychan, nil)
+	go quantiseColour(hist, m, ychan, nil)
 	colours := <-ychan
 
 	return colours, nil
 }
 
-func colourthreshold(hist pnn.ColourHistogram, M int, c chan color.Palette, wg *sync.WaitGroup) {
+func quantiseColour(hist ColourHistogram, M int, c chan color.Palette, wg *sync.WaitGroup) {
 	// Make the linked list of nodes
-	S, H := colourinitialise(hist)
-
-	//k := make(color.Palette, 0, 1000)
-	//cnt := 0
-	//for cnt != 800 {
-	//	c := color.RGBA{uint8(S.R/S.N), uint8(S.G/S.N), uint8(S.B/S.N), uint8(S.A/S.N)}
-	//	k = append(k, c)
-	//	S = S.Next
-	//	cnt++
-	//}
-	//palette := quantisers.ColourPalette(k, 100)
-	//fmt.Println(images.SaveImage("kek.png", palette, images.BestSpeed))
+	S, H := initialiseColours(hist)
 
 	m := H.Len() + 1
 	for m != M {
-		sa := H.Front().(*pnn.Node)
+		sa := H.Front().(*Node)
 		updateColourStructs(sa, sa.NN, H)
 		recalculateNeighbours(S, H)
 		m = m - 1
 	}
 
-	fmt.Println("Done")
+	//fmt.Println("Done")
 
 	thresholds := make(color.Palette, 0, M)
 	for S != nil {
 		c := color.RGBA{uint8(S.R), uint8(S.G), uint8(S.B), uint8(S.A)}
-		fmt.Println(c)
+		//fmt.Println(c)
 		thresholds = append(thresholds, c)
 		S = S.Next
 	}
@@ -60,7 +47,7 @@ func colourthreshold(hist pnn.ColourHistogram, M int, c chan color.Palette, wg *
 	c <- thresholds
 }
 
-func recalculateNeighbours(S *pnn.Node, H *pnn.Heap) {
+func recalculateNeighbours(S *Node, H *Heap) {
 	// Initialise nearest neighbour for each node and build heap of nodes
 	n := S
 	for n != nil {
@@ -70,10 +57,10 @@ func recalculateNeighbours(S *pnn.Node, H *pnn.Heap) {
 	}
 }
 
-func colourinitialise(hist pnn.ColourHistogram) (*pnn.Node, *pnn.Heap) {
+func initialiseColours(hist ColourHistogram) (*Node, *Heap) {
 	// Initialise List
-	var currentNode *pnn.Node
-	var previousNode *pnn.Node
+	var currentNode *Node
+	var previousNode *Node
 
 	keys := make([]int, 0)
 	for k, _ := range hist {
@@ -100,7 +87,7 @@ func colourinitialise(hist pnn.ColourHistogram) (*pnn.Node, *pnn.Heap) {
 	}
 
 	// Make the heap
-	h := make(pnn.Heap, 0)
+	h := make(Heap, 0)
 	heap.Init(&h)
 
 	// Initialise nearest neighbour for each node and build heap of nodes
@@ -116,14 +103,13 @@ func colourinitialise(hist pnn.ColourHistogram) (*pnn.Node, *pnn.Heap) {
 	return head, &h
 }
 
-// Find the nearest neighbour in the element in the list with index i
-func nearestNeighbour(node *pnn.Node) {
+func nearestNeighbour(node *Node) {
 	var err = math.MaxFloat64
-	var nn *pnn.Node
+	var nn *Node
 
 	tmp := node.Next
 	for tmp != nil {
-		nerr := pnn.VectorCost(node, tmp)
+		nerr := VectorCost(node, tmp)
 		if nerr < err {
 			err = nerr
 			nn = tmp
@@ -136,7 +122,7 @@ func nearestNeighbour(node *pnn.Node) {
 
 }
 
-func updateColourStructs(a, b *pnn.Node, h *pnn.Heap) {
+func updateColourStructs(a, b *Node, h *Heap) {
 	Nq := a.N + b.N
 	a.A = (a.N*a.A + b.N*b.A) / Nq
 	a.R = (a.N*a.R + b.N*b.R) / Nq

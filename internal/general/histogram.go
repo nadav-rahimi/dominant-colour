@@ -1,4 +1,4 @@
-package quantisers
+package general
 
 import (
 	"image"

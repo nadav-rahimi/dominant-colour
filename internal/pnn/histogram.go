@@ -1,4 +1,4 @@
-package pnn
+package PNN
 
 import "image"
 

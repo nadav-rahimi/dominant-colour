@@ -1,16 +1,19 @@
 package LMQ
 
 import (
-	q "github.com/nadav-rahimi/dominant-colour/internal/quantisers"
+	"errors"
+	q "github.com/nadav-rahimi/dominant-colour/internal/general"
 	"image"
 	"image/color"
 	"sync"
 )
 
-func Greyscale(img image.Image, m int) (color.Palette, error) {
+type LMQ struct{}
+
+func (lmq LMQ) Greyscale(img image.Image, m int) (color.Palette, error) {
 	histogram := q.CreateGreyscaleHistogram(img)
 	ychan := make(chan []int)
-	go multilevelThreshold(histogram, m, ychan, nil)
+	go quantise(histogram, m, ychan, nil)
 	T := <-ychan
 
 	colours := make([]color.Color, len(T))
@@ -21,38 +24,11 @@ func Greyscale(img image.Image, m int) (color.Palette, error) {
 	return colours, nil
 }
 
-func Colour(img image.Image) (color.Palette, error) {
-	rhist, ghist, bhist, ahist := q.CreateRGBAHistogram(img)
-
-	rchan := make(chan []int)
-	gchan := make(chan []int)
-	bchan := make(chan []int)
-	achan := make(chan []int)
-
-	var wg sync.WaitGroup
-	wg.Add(4)
-
-	go multilevelThreshold(rhist, 1, rchan, &wg)
-	go multilevelThreshold(ghist, 1, gchan, &wg)
-	go multilevelThreshold(bhist, 1, bchan, &wg)
-	go multilevelThreshold(ahist, 1, achan, &wg)
-
-	Tr := <-rchan
-	Tg := <-gchan
-	Tb := <-bchan
-	Ta := <-achan
-
-	wg.Wait()
-
-	colours := make([]color.Color, len(Tr))
-	for i := range colours {
-		colours[i] = color.RGBA{uint8(Tr[i]), uint8(Tg[i]), uint8(Tb[i]), uint8(Ta[i])}
-	}
-
-	return colours, nil
+func (lmq LMQ) Colour(img image.Image, m int) (color.Palette, error) {
+	return nil, errors.New("LMQ does not support colour quantisation")
 }
 
-func multilevelThreshold(hist q.Histogram, m int, c chan []int, wg *sync.WaitGroup) {
+func quantise(hist q.Histogram, m int, c chan []int, wg *sync.WaitGroup) {
 	xMax := 255
 	xMin := 0
 
