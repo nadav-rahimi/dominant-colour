@@ -22,7 +22,10 @@ func CreatePNNHistogram(img image.Image) ColourHistogram {
 			r, g, b, a := img.At(x, y).RGBA()
 
 			// Convert rgb values to be in range 0-255 so 8 bits for grayscale
-			index := ARGBIndex(a>>8, r>>8, g>>8, b>>8)
+			a, r, g, b = a>>8, r>>8, g>>8, b>>8
+
+			// Converts the colour to a unique uint16 number
+			index := ARGBIndex(r, g, b, a)
 
 			// Create a node if it doesnt exist
 			if pixels[index] == nil {

@@ -25,11 +25,11 @@ type PNNQuantiser struct {
 }
 
 func NewOtsuQuantiser() *OtsuQuantiser {
-	return &OtsuQuantiser{}
+	return &OtsuQuantiser{&Otsu.Otsu{}}
 }
 func NewLMQQuantiser() *LMQQuantiser {
-	return &LMQQuantiser{}
+	return &LMQQuantiser{&LMQ.LMQ{}}
 }
 func NewPNNQuantiser() *PNNQuantiser {
-	return &PNNQuantiser{}
+	return &PNNQuantiser{&PNN.PNN{}}
 }
