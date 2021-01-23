@@ -10,6 +10,7 @@ import (
 
 type LMQ struct{}
 
+// Returns "m" greyscale colours to best recreate the colour palette of the original image
 func (lmq LMQ) Greyscale(img image.Image, m int) (color.Palette, error) {
 	histogram := q.CreateGreyscaleHistogram(img)
 	ychan := make(chan []int)
@@ -24,12 +25,15 @@ func (lmq LMQ) Greyscale(img image.Image, m int) (color.Palette, error) {
 	return colours, nil
 }
 
+// Implemented in accordance with the quantiser interface but does not support colour
+// quantisation, only greyscale quantisation
 func (lmq LMQ) Colour(img image.Image, m int) (color.Palette, error) {
 	return nil, errors.New("LMQ does not support colour quantisation")
 }
 
+// Quantises a given histogram
 func quantise(hist q.Histogram, m int, c chan []int, wg *sync.WaitGroup) {
-	xMax := 255
+	xMax := 256
 	xMin := 0
 
 	// Calculate the initial threshold values
@@ -51,8 +55,9 @@ func quantise(hist q.Histogram, m int, c chan []int, wg *sync.WaitGroup) {
 	for {
 		copy(oldT, T)
 
-		// Segments the pixels of the image into thresholds based on the linearHistogram
+		// Segments the pixels of the image into thresholds based on histogram
 		for k, v := range hist {
+			// Checks for k=0 since it cannot be checked in the loop
 			if k == 0 {
 				segments[1][0] = v
 			}
@@ -82,8 +87,7 @@ func quantise(hist q.Histogram, m int, c chan []int, wg *sync.WaitGroup) {
 
 	}
 
-	//fmt.Println(T)
-
+	// Puts the colours into a slice and returns them through the channel
 	averagesToReturn := make([]int, 0, m)
 	for i := 1; i <= m; i++ {
 		averagesToReturn = append(averagesToReturn, averages[i])
@@ -96,6 +100,7 @@ func quantise(hist q.Histogram, m int, c chan []int, wg *sync.WaitGroup) {
 	c <- averagesToReturn
 }
 
+// Calculates the mean greyscale in the segment
 func mean(h q.Histogram) int {
 	sum := 0
 	total := 0
@@ -111,6 +116,7 @@ func mean(h q.Histogram) int {
 	return sum / total
 }
 
+// Checks if two uint8 slices are equal
 func equal(a, b []uint8) bool {
 	if len(a) != len(b) {
 		return false

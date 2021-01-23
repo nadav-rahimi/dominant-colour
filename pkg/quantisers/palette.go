@@ -8,7 +8,9 @@ import (
 	"reflect"
 )
 
-// Recreates image from colour palette
+// Recreates image from colour palette. If one greyscale colour is
+// specified then the image is recreated in black and white with the
+// split between them at the specified input colour
 func ImageFromPalette(img image.Image, c color.Palette) (image.Image, error) {
 	if c == nil || len(c) < 1 {
 		return nil, errors.New("Colours must be specified")
@@ -42,25 +44,6 @@ func ImageFromPalette(img image.Image, c color.Palette) (image.Image, error) {
 				} else {
 					cimg.Set(x, y, color.Gray{255})
 				}
-			} else if reflect.TypeOf(c[0]) == reflect.TypeOf(color.RGBA{}) {
-				clr := c[0].(color.RGBA)
-				cr := uint8(0)
-				cg := uint8(0)
-				cb := uint8(0)
-				ca := uint8(0)
-				if r >= uint32(clr.R) {
-					cr = 0xff
-				}
-				if g >= uint32(clr.G) {
-					cg = 0xff
-				}
-				if b >= uint32(clr.B) {
-					cb = 0xff
-				}
-				if a >= uint32(clr.A) {
-					ca = 0xff
-				}
-				cimg.Set(x, y, color.RGBA{cr, cg, cb, ca})
 			} else {
 				return nil, errors.New("Invalid colour palette")
 			}
@@ -70,15 +53,15 @@ func ImageFromPalette(img image.Image, c color.Palette) (image.Image, error) {
 	return cimg, nil
 }
 
-// Rectangular image of all the colours in a palette stacked horizontally
-// "ss" denotes the width/height of each colour square in pixels
-func ColourPalette(c color.Palette, ss int) image.Image {
+// Returns image of the colour palette, which each colour represented
+// as a square. The size of the square in pixels is also specified.
+func ColourPalette(c color.Palette, size int) image.Image {
 	numColours := len(c)
-	img := image.NewRGBA(image.Rect(0, 0, ss*numColours, ss))
+	img := image.NewRGBA(image.Rect(0, 0, size*numColours, size))
 
 	for i, v := range c {
 		uniform_colour := image.NewUniform(v)
-		draw.Draw(img, image.Rect(ss*i, 0, ss*i+ss, ss), uniform_colour, image.Point{}, draw.Src)
+		draw.Draw(img, image.Rect(size*i, 0, size*i+size, size), uniform_colour, image.Point{}, draw.Src)
 	}
 
 	return img

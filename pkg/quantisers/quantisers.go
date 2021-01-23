@@ -8,6 +8,7 @@ import (
 	"image/color"
 )
 
+// Quantiser interface used to define common quantiser behaviour
 type Quantiser interface {
 	Greyscale(img image.Image, m int) (color.Palette, error)
 	Colour(img image.Image, m int) (color.Palette, error)

@@ -10,6 +10,9 @@ import (
 
 type Otsu struct{}
 
+// Returns one greyscale colour which best represents the threshold for splitting
+// the image into black and white. Otsu only supports m = 1 but still takes in the
+// m parameter to comply with the Quantiser interface
 func (otsu Otsu) Greyscale(img image.Image, m int) (color.Palette, error) {
 	if m > 1 {
 		return nil, errors.New("Otsu does not support greyscale quantisation with m > 1")
@@ -23,10 +26,13 @@ func (otsu Otsu) Greyscale(img image.Image, m int) (color.Palette, error) {
 	return color.Palette{color.Gray{uint8(T)}}, nil
 }
 
+// Implemented in accordance with the quantiser interface but does not support colour
+// quantisation, only greyscale quantisation
 func (otsu Otsu) Colour(img image.Image, m int) (color.Palette, error) {
 	return nil, errors.New("Otsu does not support colour quantisation")
 }
 
+// Quantises a given histogram
 func quantise(hist q.Histogram, c chan int, wg *sync.WaitGroup) {
 	xMax := 256
 	P := make([]int, xMax)

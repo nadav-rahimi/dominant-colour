@@ -9,6 +9,9 @@ import (
 	"sync"
 )
 
+// TODO, more efficient way to calculate nearest neighbour
+
+// Returns "m" rgba colours to best recreate the colour palette of the original image
 func (pnn *PNN) Colour(img image.Image, m int) (color.Palette, error) {
 	hist := CreatePNNHistogram(img)
 	ychan := make(chan color.Palette)
@@ -18,6 +21,7 @@ func (pnn *PNN) Colour(img image.Image, m int) (color.Palette, error) {
 	return colours, nil
 }
 
+// Quantises a linear histogram with pnn
 func quantiseColour(hist ColourHistogram, M int, c chan color.Palette, wg *sync.WaitGroup) {
 	// Make the linked list of nodes
 	S, H := initialiseColours(hist)
@@ -47,6 +51,7 @@ func quantiseColour(hist ColourHistogram, M int, c chan color.Palette, wg *sync.
 	c <- thresholds
 }
 
+// Recalculates nearest neighbours for all nodes in the heap
 func recalculateNeighbours(S *Node, H *Heap) {
 	// Initialise nearest neighbour for each node and build heap of nodes
 	n := S
@@ -57,6 +62,7 @@ func recalculateNeighbours(S *Node, H *Heap) {
 	}
 }
 
+// Initialises the linked list and heap used by the PNN Algorithm to quantise the image
 func initialiseColours(hist ColourHistogram) (*Node, *Heap) {
 	// Initialise List
 	var currentNode *Node
@@ -103,6 +109,7 @@ func initialiseColours(hist ColourHistogram) (*Node, *Heap) {
 	return head, &h
 }
 
+// For a given node, finds the nearest neighbour, this is the node which has the smallest merge cost
 func nearestNeighbour(node *Node) {
 	var err = math.MaxFloat64
 	var nn *Node
@@ -122,6 +129,7 @@ func nearestNeighbour(node *Node) {
 
 }
 
+// Reduces the size of the linked list to eventually achieve a quantised palette
 func updateColourStructs(a, b *Node, h *Heap) {
 	Nq := a.N + b.N
 	a.A = (a.N*a.A + b.N*b.A) / Nq

@@ -2,15 +2,16 @@ package PNN
 
 import (
 	"container/heap"
-	q "github.com/nadav-rahimi/dominant-colour/internal/general"
+	g "github.com/nadav-rahimi/dominant-colour/internal/general"
 	"image"
 	"image/color"
 	"sort"
 	"sync"
 )
 
+// Returns "m" greyscale colours to best recreate the colour palette of the original image
 func (pnn PNN) Greyscale(img image.Image, m int) (color.Palette, error) {
-	hist := q.CreateGreyscaleHistogram(img)
+	hist := g.CreateGreyscaleHistogram(img)
 	ychan := make(chan []int)
 	go quantiseGreyscale(hist, m, ychan, nil)
 	T := <-ychan
@@ -23,9 +24,14 @@ func (pnn PNN) Greyscale(img image.Image, m int) (color.Palette, error) {
 	return colours, nil
 }
 
-func quantiseGreyscale(hist q.Histogram, M int, c chan []int, wg *sync.WaitGroup) {
+// Quantises a linear histogram with pnn
+func quantiseGreyscale(hist g.Histogram, M int, c chan []int, wg *sync.WaitGroup) {
+	// Create list and heap for PNN
 	S, H := initialiseGreyscale(hist)
 
+	// m is set to H.Len() + 1 since the final element
+	// in the list is left out from the heap so for total
+	// number of elements, 1 needs to be added
 	m := H.Len() + 1
 	for m != M {
 		sa := H.Front().(*Node)
@@ -33,6 +39,7 @@ func quantiseGreyscale(hist q.Histogram, M int, c chan []int, wg *sync.WaitGroup
 		m = m - 1
 	}
 
+	// Return the greyscale thresholds
 	thresholds := make([]int, 0, M)
 	for S != nil {
 		thresholds = append(thresholds, int(S.C))
@@ -48,7 +55,8 @@ func quantiseGreyscale(hist q.Histogram, M int, c chan []int, wg *sync.WaitGroup
 
 }
 
-func initialiseGreyscale(hist q.Histogram) (*Node, *Heap) {
+// Initialises the linked list and heap used by the PNN Algorithm to quantise the image
+func initialiseGreyscale(hist g.Histogram) (*Node, *Heap) {
 	// Initialise Heap
 	h := make(Heap, 0)
 	heap.Init(&h)
@@ -58,6 +66,8 @@ func initialiseGreyscale(hist q.Histogram) (*Node, *Heap) {
 	var currentNode *Node
 	var previousNode *Node
 
+	// Sort keys so linked list created
+	// in order of increasing grey value
 	keys := make([]int, 0)
 	for k, _ := range hist {
 		keys = append(keys, int(k))
@@ -96,6 +106,7 @@ func initialiseGreyscale(hist q.Histogram) (*Node, *Heap) {
 	return head, &h
 }
 
+// Reduces the size of the linked list to eventually achieve a quantised palette
 func updateGreyscaleStructs(a, b *Node, h *Heap) {
 	// Combine the data from B into A
 	Nq := a.N + b.N
