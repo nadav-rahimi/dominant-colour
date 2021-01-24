@@ -1,8 +1,9 @@
-package PNN
+package PNNLAB
 
 import (
 	"container/heap"
 	"fmt"
+	"github.com/nadav-rahimi/dominant-colour/pkg/colours"
 	"image"
 	"image/color"
 	"math"
@@ -13,8 +14,8 @@ import (
 // TODO, more efficient way to calculate nearest neighbour
 
 // Returns "m" rgba colours to best recreate the colour palette of the original image
-func (pnn *PNN) Colour(img image.Image, m int) (color.Palette, error) {
-	hist := CreatePNNHistogram(img)
+func (pnn *PNNLAB) Colour(img image.Image, m int) (color.Palette, error) {
+	hist := CreatePNNLABHistogram(img)
 	ychan := make(chan color.Palette)
 	go quantiseColour(hist, m, ychan, nil)
 	colours := <-ychan
@@ -27,20 +28,20 @@ func quantiseColour(hist ColourHistogram, M int, c chan color.Palette, wg *sync.
 	// Make the linked list of nodes
 	S, H := initialiseColours(hist)
 
+	fmt.Println("initialised")
+
 	m := H.Len() + 1
 	for m != M {
+		fmt.Println(m)
 		sa := H.Front().(*Node)
 		updateColourStructs(sa, sa.NN, H)
 		recalculateNeighbours(S, H)
 		m = m - 1
 	}
 
-	//fmt.Println("Done")
-
 	thresholds := make(color.Palette, 0, M)
 	for S != nil {
-		c := color.RGBA{uint8(S.R), uint8(S.G), uint8(S.B), uint8(S.A)}
-		//fmt.Println(c)
+		c := color.RGBA{uint8(S.R), uint8(S.G), uint8(S.B), 255}
 		thresholds = append(thresholds, c)
 		S = S.Next
 	}
@@ -75,13 +76,10 @@ func initialiseColours(hist ColourHistogram) (*Node, *Heap) {
 	}
 	sort.Ints(keys)
 
-	fmt.Println(len(keys))
-
 	var head = hist[uint32(keys[0])]
 	previousNode = nil
 	for _, i := range keys {
 		currentNode = hist[uint32(i)]
-		currentNode.A /= currentNode.N
 		currentNode.R /= currentNode.N
 		currentNode.G /= currentNode.N
 		currentNode.B /= currentNode.N
@@ -99,14 +97,18 @@ func initialiseColours(hist ColourHistogram) (*Node, *Heap) {
 	h := make(Heap, 0)
 	heap.Init(&h)
 
+	fmt.Println(len(keys))
+	cnt := 1
 	// Initialise nearest neighbour for each node and build heap of nodes
 	n := head
 	for n != nil {
 		nearestNeighbour(n)
+		cnt++
 		if n.Next != nil {
 			heap.Push(&h, n)
 		}
 		n = n.Next
+
 	}
 
 	return head, &h
@@ -117,9 +119,11 @@ func nearestNeighbour(node *Node) {
 	var err = math.MaxFloat64
 	var nn *Node
 
+	lab1 := node.LAB()
 	tmp := node.Next
 	for tmp != nil {
-		nerr := VectorCost(node, tmp)
+		lab2 := tmp.LAB()
+		nerr := colours.LABDistance(lab1, lab2)
 		if nerr < err {
 			err = nerr
 			nn = tmp
@@ -129,13 +133,11 @@ func nearestNeighbour(node *Node) {
 
 	node.NN = nn
 	node.D = err
-
 }
 
 // Reduces the size of the linked list to eventually achieve a quantised palette
 func updateColourStructs(a, b *Node, h *Heap) {
 	Nq := a.N + b.N
-	a.A = (a.N*a.A + b.N*b.A) / Nq
 	a.R = (a.N*a.R + b.N*b.R) / Nq
 	a.G = (a.N*a.G + b.N*b.G) / Nq
 	a.B = (a.N*a.B + b.N*b.B) / Nq

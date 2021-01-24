@@ -70,7 +70,7 @@ if err = png.Encode(savedImg, palette); err != nil {
 }
 ```
 
-### Result
+### Result 
 #### Input
 ![input](assets/graffiti.jpg)
 #### Output

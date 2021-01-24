@@ -1,4 +1,4 @@
-package PNN
+package PNNLAB
 
 import (
 	"container/heap"
@@ -10,7 +10,7 @@ import (
 )
 
 // Returns "m" greyscale colours to best recreate the colour palette of the original image
-func (pnn *PNN) Greyscale(img image.Image, m int) (color.Palette, error) {
+func (pnn *PNNLAB) Greyscale(img image.Image, m int) (color.Palette, error) {
 	hist := g.CreateGreyscaleHistogram(img)
 	ychan := make(chan []int)
 	go quantiseGreyscale(hist, m, ychan, nil)

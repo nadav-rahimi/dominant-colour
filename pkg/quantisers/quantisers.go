@@ -4,6 +4,7 @@ import (
 	LMQ "github.com/nadav-rahimi/dominant-colour/internal/lmq"
 	Otsu "github.com/nadav-rahimi/dominant-colour/internal/otsu"
 	PNN "github.com/nadav-rahimi/dominant-colour/internal/pnn"
+	PNNLAB "github.com/nadav-rahimi/dominant-colour/internal/pnnlab"
 	"image"
 	"image/color"
 )
@@ -23,6 +24,9 @@ type LMQQuantiser struct {
 type PNNQuantiser struct {
 	*PNN.PNN
 }
+type PNNLABQuantiser struct {
+	*PNNLAB.PNNLAB
+}
 
 func NewOtsuQuantiser() *OtsuQuantiser {
 	return &OtsuQuantiser{&Otsu.Otsu{}}
@@ -32,4 +36,7 @@ func NewLMQQuantiser() *LMQQuantiser {
 }
 func NewPNNQuantiser() *PNNQuantiser {
 	return &PNNQuantiser{&PNN.PNN{}}
+}
+func NewPNNLABQuantiser() *PNNLABQuantiser {
+	return &PNNLABQuantiser{&PNNLAB.PNNLAB{}}
 }
