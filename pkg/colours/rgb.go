@@ -5,10 +5,12 @@ type RGB struct {
 	R, G, B float64
 }
 
+// Create a new RGB colour
 func NewRGB(r, g, b float64) *RGB {
 	return &RGB{r, g, b}
 }
 
+// Scales RGB colours in the range [0, 1]
 func (rgb *RGB) scale() (r, g, b float64) {
 	// Scaling down uint8 values to be in the range [0, 1]
 	r = rgb.R / 255
@@ -18,6 +20,7 @@ func (rgb *RGB) scale() (r, g, b float64) {
 	return r, g, b
 }
 
+// Converts an RGB colour to the XYZ colour space
 func (rgb *RGB) XYZ() *XYZ {
 	r, g, b := rgb.scale()
 
@@ -28,6 +31,7 @@ func (rgb *RGB) XYZ() *XYZ {
 	return &XYZ{x, y, z}
 }
 
+// Converts an RGB colour to the LAB colour space
 func (rgb *RGB) LAB() *LAB {
 	return rgb.XYZ().LAB()
 }

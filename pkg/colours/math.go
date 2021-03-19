@@ -17,7 +17,7 @@ func Sqr(a float64) float64 {
 	return a * a
 }
 
-// Returns degrees
+// Returns value is in degrees
 func HueAtan2(x, y float64) float64 {
 	return (math.Atan2(x, y) + 2*math.Pi) * (180 / math.Pi)
 }
