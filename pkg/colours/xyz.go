@@ -5,11 +5,6 @@ type XYZ struct {
 	X, Y, Z float64
 }
 
-// Create a new XYZ colour
-func NewXYZ(x, y, z float64) *XYZ {
-	return &XYZ{x, y, z}
-}
-
 // Converts an XYZ colour to the RGB colour space
 func (xyz *XYZ) RGB() *RGB {
 	r := Clamp((3.2404542*xyz.X+-1.5371385*xyz.Y+-0.4985314*xyz.Z)*255, 0, 255)

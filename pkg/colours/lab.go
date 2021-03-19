@@ -7,11 +7,6 @@ type LAB struct {
 	L, A, B float64
 }
 
-// Creates a new LAB colour
-func NewLAB(l, a, b float64) *LAB {
-	return &LAB{l, a, b}
-}
-
 // Converts a LAB colour to XYZ
 func (lab *LAB) XYZ() *XYZ {
 	x := Xn * finv(((lab.L+16)/116)+(lab.A/500))
