@@ -1,40 +1,20 @@
-package LMQ
+package lmq
 
 import (
-	"errors"
-	q "github.com/nadav-rahimi/dominant-colour/internal/general"
+	"github.com/nadav-rahimi/dominant-colour/internal/quantisers"
 	"image"
 	"image/color"
-	"sync"
 )
 
-type LMQ struct{}
+const (
+	xMax = 255
+	xMin = 0
+)
 
 // Returns "m" greyscale colours to best recreate the colour palette of the original image
-func (lmq LMQ) Greyscale(img image.Image, m int) (color.Palette, error) {
-	histogram := q.CreateGreyscaleHistogram(img)
-	ychan := make(chan []int)
-	go quantise(histogram, m, ychan, nil)
-	T := <-ychan
-
-	colours := make([]color.Color, len(T))
-	for i := range colours {
-		colours[i] = color.Gray{uint8(T[i])}
-	}
-
-	return colours, nil
-}
-
-// Implemented in accordance with the quantiser interface but does not support colour
-// quantisation, only greyscale quantisation
-func (lmq LMQ) Colour(img image.Image, m int) (color.Palette, error) {
-	return nil, errors.New("LMQ does not support colour quantisation")
-}
-
-// Quantises a given histogram
-func quantise(hist q.Histogram, m int, c chan []int, wg *sync.WaitGroup) {
-	xMax := 256
-	xMin := 0
+func QuantiseGreyscale(img image.Image, m int) color.Palette {
+	// Create the histogram
+	histogram := quantisers.CreateGreyscaleHistogram(img)
 
 	// Calculate the initial threshold values
 	T := make([]uint8, m+1)
@@ -42,9 +22,9 @@ func quantise(hist q.Histogram, m int, c chan []int, wg *sync.WaitGroup) {
 		T[i] = uint8(xMin + (i*(xMax-xMin))/m)
 	}
 	// Initialising the segment map
-	segments := make(map[int]q.Histogram)
+	segments := make(map[int]quantisers.LinearHistogram)
 	for i := 1; i <= m; i++ {
-		segments[i] = q.Histogram{}
+		segments[i] = quantisers.LinearHistogram{}
 	}
 	// Initialising the averages for each segment
 	averages := make(map[int]int)
@@ -56,7 +36,7 @@ func quantise(hist q.Histogram, m int, c chan []int, wg *sync.WaitGroup) {
 		copy(oldT, T)
 
 		// Segments the pixels of the image into thresholds based on histogram
-		for k, v := range hist {
+		for k, v := range histogram {
 			// Checks for k=0 since it cannot be checked in the loop
 			if k == 0 {
 				segments[1][0] = v
@@ -87,23 +67,18 @@ func quantise(hist q.Histogram, m int, c chan []int, wg *sync.WaitGroup) {
 
 	}
 
-	// Puts the colours into a slice and returns them through the channel
-	averagesToReturn := make([]int, 0, m)
-	for i := 1; i <= m; i++ {
-		averagesToReturn = append(averagesToReturn, averages[i])
+	// Convert the calculated averages to colour values
+	colours := make([]color.Color, m)
+	for i := range colours {
+		colours[i] = color.Gray{uint8(averages[i+1])}
 	}
 
-	if wg != nil {
-		wg.Done()
-	}
-
-	c <- averagesToReturn
+	return colours
 }
 
-// Calculates the mean greyscale in the segment
-func mean(h q.Histogram) int {
-	sum := 0
-	total := 0
+// Calculates the mean greyscale value in the histogram
+func mean(h quantisers.LinearHistogram) int {
+	sum, total := 0, 0
 
 	for k, v := range h {
 		sum += int(k) * v

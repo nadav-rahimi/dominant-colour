@@ -1,7 +1,8 @@
-package PNN
+package pnn
 
 import (
 	_ "fmt"
+	"github.com/nadav-rahimi/dominant-colour/pkg/colours"
 	"math"
 )
 
@@ -15,11 +16,14 @@ type Node struct {
 
 	// Variables for greyscale quantisation
 	C float64 // Mean grey level of the class
-	T uint8   // Maximal grey value, also servers as threshold between the class and its neighbour class to the right
+	T uint8   // Maximal grey value, also serves as threshold between the class and its neighbour class to the right
 
 	// Variables for colour quantisation
-	A, R, G, B float64 // ARGB Value of the node
-	NN         *Node   // Pointers to the nearest neighbour
+	colours.RGB         // RGB Values of the node
+	A           float64 // Alpha Value of the node (Used for non-LAB PNN)
+	NN          *Node   // Pointers to the nearest neighbour
+	MergeCount  int     // The iteration where the node was last merged with another
+	UpdateCount int     // The iteration where the MSE was last calculated for the node
 }
 
 // Squares a float64 number
@@ -31,7 +35,7 @@ func Sqr(a float64) float64 {
 // it represents the increase in MSE value caused by the merge
 func LinearCost(a, b *Node) float64 {
 	lhs := (a.N * b.N) / (a.N + b.N)
-	rhs := math.Pow(math.Abs(a.C-b.C), 2)
+	rhs := Sqr(math.Abs(a.C - b.C))
 
 	return lhs * rhs
 }

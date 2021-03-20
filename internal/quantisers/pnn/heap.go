@@ -1,7 +1,8 @@
-package PNN
+package pnn
 
 import "container/heap"
 
+// Implements a Heap of Nodes used for PNN
 type Heap []*Node
 
 func (h Heap) Len() int {
@@ -9,7 +10,7 @@ func (h Heap) Len() int {
 }
 
 func (h Heap) Less(i, j int) bool {
-	// We want Pop to give us the lowest priority so we use less than here.
+	// We want Pop to give us the node with lowest cost so we use "<" here.
 	return h[i].D < h[j].D
 }
 

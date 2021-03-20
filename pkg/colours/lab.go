@@ -92,7 +92,6 @@ func LABDistance(lab1, lab2 *LAB) float64 {
 
 	Rt := -Sin(2*deltaTheta) * Rc
 
-	// TODO Change these ?
 	// Weighting factors
 	var kL, kC, kH float64
 	kL, kC, kH = 1, 1, 1

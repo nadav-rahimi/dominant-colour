@@ -4,6 +4,10 @@ import (
 	"flag"
 	"fmt"
 	"github.com/nadav-rahimi/dominant-colour/pkg/quantisers"
+	"github.com/nadav-rahimi/dominant-colour/pkg/quantisers/lmq"
+	"github.com/nadav-rahimi/dominant-colour/pkg/quantisers/otsu"
+	"github.com/nadav-rahimi/dominant-colour/pkg/quantisers/pnn"
+	"github.com/nadav-rahimi/dominant-colour/pkg/quantisers/pnnlab"
 	"image"
 	"image/color"
 	"image/jpeg"
@@ -12,51 +16,40 @@ import (
 	"showcase/pkg/images"
 )
 
-// TODO add readme and .gitkeep + attribution for image
-
-var (
-	multi        *int
-	err          error
-	useRandom    *bool
-	quantisedImg image.Image
-	palette      image.Image
-	img          image.Image
-	colours      color.Palette
-)
+var err error
+var img image.Image
+var paletteSize int
 
 func main() {
-	useRandom = flag.Bool("random", false, "Whether to use a random image instead of the supplied one")
-	multi = flag.Int("multi", 6, "Number of colours for multi tone quantisations")
+	var randomImg bool
+
+	flag.BoolVar(&randomImg, "random", false, "Whether to use a random image instead of the supplied one")
+	flag.IntVar(&paletteSize, "palette-size", 7, "The size of the palette you want to generate")
 	flag.Parse()
 
-	img, err = images.ReadImage("graffiti.jpg")
+	if randomImg {
+		img, err = randomImage()
+	} else {
+		img, err = images.ReadImage("fish.jpg")
+	}
 	if err != nil {
 		log.Fatal(err)
 	}
-	if *useRandom {
-		img = randomImage()
-	}
 
-	//OtsuExample()
-	//LMQExample()
-	//PNNExample()
+	OtsuExample()
+	LMQExample()
+	PNNExample()
 	PNNLABExample()
 }
 
 func OtsuExample() {
 	fmt.Println("Creating Otsu...")
 
-	// Creating the Otsu Quantiser
-	Otsu := quantisers.NewOtsuQuantiser()
-
-	// Greyscale Image
-	colours, err = Otsu.Greyscale(img, 1)
-	logErr(err)
-	quantisedImg, err = quantisers.ImageFromPalette(img, colours)
-	logErr(err)
-	palette = quantisers.ColourPalette(colours, 200)
-	logErr(images.SaveImage("otsu-greyscale-single.png", quantisedImg, images.BestSpeed))
-	logErr(images.SaveImage("otsu-greyscale-single-palette.png", palette, images.BestSpeed))
+	colours := otsu.QuantiseGreyscale(img)
+	quantisedImg, _ := quantisers.ImageFromPalette(img, colours)
+	palette := quantisers.ColourPaletteImage(colours, 200)
+	images.SaveImage("otsu-grey.jpg", quantisedImg, images.BestSpeed)
+	images.SaveImage("otsu-grey-palette.jpg", palette, images.BestSpeed)
 
 	fmt.Println("Finished Otsu")
 }
@@ -64,26 +57,19 @@ func OtsuExample() {
 func LMQExample() {
 	fmt.Println("Creating LMQ...")
 
-	// Creating the LMQ Quantiser
-	LMQ := quantisers.NewLMQQuantiser()
-
 	// Greyscale Image Single Tone
-	colours, err = LMQ.Greyscale(img, 1)
-	logErr(err)
-	quantisedImg, err = quantisers.ImageFromPalette(img, colours)
-	logErr(err)
-	palette = quantisers.ColourPalette(colours, 200)
-	logErr(images.SaveImage("lmq-greyscale-single.png", quantisedImg, images.BestSpeed))
-	logErr(images.SaveImage("lmq-greyscale-single-palette.png", palette, images.BestSpeed))
+	colours := lmq.QuantiseGreyscale(img, 1)
+	quantisedImg, _ := quantisers.ImageFromPalette(img, colours)
+	palette := quantisers.ColourPaletteImage(colours, 200)
+	images.SaveImage("lmq-grey-single.jpg", quantisedImg, images.BestSpeed)
+	images.SaveImage("lmq-grey-single-palette.jpg", palette, images.BestSpeed)
 
 	// Greyscale Image Multi Tone
-	colours, err = LMQ.Greyscale(img, *multi)
-	logErr(err)
-	quantisedImg, err = quantisers.ImageFromPalette(img, colours)
-	logErr(err)
-	palette = quantisers.ColourPalette(colours, 200)
-	logErr(images.SaveImage("lmq-greyscale-multi.png", quantisedImg, images.BestSpeed))
-	logErr(images.SaveImage("lmq-greyscale-multi-palette.png", palette, images.BestSpeed))
+	colours = lmq.QuantiseGreyscale(img, paletteSize)
+	quantisedImg, _ = quantisers.ImageFromPalette(img, colours)
+	palette = quantisers.ColourPaletteImage(colours, 200)
+	images.SaveImage("lmq-grey-multi.jpg", quantisedImg, images.BestSpeed)
+	images.SaveImage("lmq-grey-multi-palette.jpg", palette, images.BestSpeed)
 
 	fmt.Println("Finished LMQ")
 }
@@ -91,35 +77,26 @@ func LMQExample() {
 func PNNExample() {
 	fmt.Println("Creating PNN...")
 
-	// Creating the PNN Quantiser
-	PNN := quantisers.NewPNNQuantiser()
-
 	// Greyscale Image Single Tone
-	colours, err = PNN.Greyscale(img, 1)
-	logErr(err)
-	quantisedImg, err = quantisers.ImageFromPalette(img, colours)
-	logErr(err)
-	palette = quantisers.ColourPalette(colours, 200)
-	logErr(images.SaveImage("pnn-greyscale-single.png", quantisedImg, images.BestSpeed))
-	logErr(images.SaveImage("pnn-greyscale-single-palette.png", palette, images.BestSpeed))
+	colours := pnn.QuantiseGreyscale(img, 1)
+	quantisedImg, _ := quantisers.ImageFromPalette(img, colours)
+	palette := quantisers.ColourPaletteImage(colours, 200)
+	images.SaveImage("pnn-grey-single.jpg", quantisedImg, images.BestSpeed)
+	images.SaveImage("pnn-grey-single-palette.jpg", palette, images.BestSpeed)
 
 	// Greyscale Image Multi Tone
-	colours, err = PNN.Greyscale(img, *multi)
-	logErr(err)
-	quantisedImg, err = quantisers.ImageFromPalette(img, colours)
-	logErr(err)
-	palette = quantisers.ColourPalette(colours, 200)
-	logErr(images.SaveImage("pnn-greyscale-multi.png", quantisedImg, images.BestSpeed))
-	logErr(images.SaveImage("pnn-greyscale-multi-palette.png", palette, images.BestSpeed))
+	colours = pnn.QuantiseGreyscale(img, paletteSize)
+	quantisedImg, _ = quantisers.ImageFromPalette(img, colours)
+	palette = quantisers.ColourPaletteImage(colours, 200)
+	images.SaveImage("pnn-grey-multi.jpg", quantisedImg, images.BestSpeed)
+	images.SaveImage("pnn-grey-multi-palette.jpg", palette, images.BestSpeed)
 
 	// Colour Image Multi Tone
-	colours, err = PNN.Colour(img, *multi)
-	logErr(err)
-	quantisedImg, err = quantisers.ImageFromPalette(img, colours)
-	logErr(err)
-	palette = quantisers.ColourPalette(colours, 200)
-	logErr(images.SaveImage("pnn-colour-multi.png", quantisedImg, images.BestSpeed))
-	logErr(images.SaveImage("pnn-colour-multi-palette.png", palette, images.BestSpeed))
+	colours = pnn.QuantiseColour(img, paletteSize)
+	quantisedImg, _ = quantisers.ImageFromPalette(img, colours)
+	palette = quantisers.ColourPaletteImage(colours, 200)
+	images.SaveImage("pnn-colour-multi.jpg", quantisedImg, images.BestSpeed)
+	images.SaveImage("pnn-colour-multi-palette.jpg", palette, images.BestSpeed)
 
 	fmt.Println("Finished PNN")
 }
@@ -127,37 +104,34 @@ func PNNExample() {
 func PNNLABExample() {
 	fmt.Println("Creating PNN LAB...")
 
-	// Creating the PNN Quantiser
-	PNNLAB := quantisers.NewPNNLABQuantiser()
-
 	// Doesn't do greyscale because same as PNN
 
 	// Colour Image Multi Tone
-	colours, err = PNNLAB.Colour(img, *multi)
-	logErr(err)
-	quantisedImg, err = quantisers.ImageFromPalette(img, colours)
-	logErr(err)
-	palette = quantisers.ColourPalette(colours, 200)
-	logErr(images.SaveImage("pnnlab-colour-multi.png", quantisedImg, images.BestSpeed))
-	logErr(images.SaveImage("pnnlab-colour-multi-palette.png", palette, images.BestSpeed))
+	colours := pnnlab.QuantiseColour(img, paletteSize)
+	quantisedImg, _ := quantisers.ImageFromPalette(img, colours)
+	palette := quantisers.ColourPaletteImage(colours, 200)
+	images.SaveImage("pnnlab-colour-multi.jpg", quantisedImg, images.BestSpeed)
+	images.SaveImage("pnnlab-colour-multi-palette.jpg", palette, images.BestSpeed)
 
 	fmt.Println("Finished PNN LAB")
 }
 
-func randomImage() image.Image {
-	fmt.Println("Using Random...")
-
+func randomImage() (image.Image, error) {
 	resp, err := http.Get("https://picsum.photos/3000/2000")
 	if err != nil {
-		log.Panic(err)
+		return nil, err
 	}
 	defer resp.Body.Close()
 
 	img, err = jpeg.Decode(resp.Body)
+	if err != nil {
+		return nil, err
+	}
 
+	// Save coloured version of the image
 	err = images.SaveImage("random.png", img, images.BestSpeed)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	// Save greyscale version of image
@@ -173,14 +147,8 @@ func randomImage() image.Image {
 	}
 	err = images.SaveImage("random-grey.png", cimg, images.BestSpeed)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
-	return img
-}
-
-func logErr(err error) {
-	if err != nil {
-		log.Fatal(err)
-	}
+	return img, nil
 }

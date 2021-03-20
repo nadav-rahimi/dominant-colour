@@ -55,7 +55,7 @@ func ImageFromPalette(img image.Image, c color.Palette) (image.Image, error) {
 
 // Returns image of the colour palette, which each colour represented
 // as a square. The size of the square in pixels is also specified.
-func ColourPalette(c color.Palette, size int) image.Image {
+func ColourPaletteImage(c color.Palette, size int) image.Image {
 	numColours := len(c)
 	img := image.NewRGBA(image.Rect(0, 0, size*numColours, size))
 

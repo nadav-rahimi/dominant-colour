@@ -17,3 +17,5 @@ clean:
 		$(GOCLEAN)
 		rm -f bin/$(BINARY_NAME)_linux
 		rm -f bin/$(BINARY_NAME)_windows
+bench:
+		go test -bench=. -benchtime=10s

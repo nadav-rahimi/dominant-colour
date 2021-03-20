@@ -1,33 +1,30 @@
-package PNN
+package pnn
 
 import (
 	"container/heap"
-	g "github.com/nadav-rahimi/dominant-colour/internal/general"
+	"github.com/nadav-rahimi/dominant-colour/internal/quantisers"
 	"image"
 	"image/color"
 	"sort"
-	"sync"
 )
 
 // Returns "m" greyscale colours to best recreate the colour palette of the original image
-func (pnn *PNN) Greyscale(img image.Image, m int) (color.Palette, error) {
-	hist := g.CreateGreyscaleHistogram(img)
-	ychan := make(chan []int)
-	go quantiseGreyscale(hist, m, ychan, nil)
-	T := <-ychan
+func QuantiseGreyscale(img image.Image, m int) color.Palette {
+	hist := quantisers.CreateGreyscaleHistogram(img)
+	T := calculateGreyscaleThresholds(hist, m)
 
 	colours := make([]color.Color, len(T))
 	for i := range colours {
 		colours[i] = color.Gray{uint8(T[i])}
 	}
 
-	return colours, nil
+	return colours
 }
 
-// Quantises a linear histogram with pnn
-func quantiseGreyscale(hist g.Histogram, M int, c chan []int, wg *sync.WaitGroup) {
-	// Create list and heap for PNN
-	S, H := initialiseGreyscale(hist)
+// Calculates the greyscale thresholds for the histogram
+func calculateGreyscaleThresholds(hist quantisers.LinearHistogram, M int) []int {
+	// Create linked list and heap for PNN
+	S, H := initialiseGreyscaleStructures(hist)
 
 	// m is set to H.Len() + 1 since the final element
 	// in the list is left out from the heap so for total
@@ -47,16 +44,11 @@ func quantiseGreyscale(hist g.Histogram, M int, c chan []int, wg *sync.WaitGroup
 	}
 	sort.Ints(thresholds)
 
-	if wg != nil {
-		wg.Done()
-	}
-
-	c <- thresholds
-
+	return thresholds
 }
 
 // Initialises the linked list and heap used by the PNN Algorithm to quantise the image
-func initialiseGreyscale(hist g.Histogram) (*Node, *Heap) {
+func initialiseGreyscaleStructures(hist quantisers.LinearHistogram) (*Node, *Heap) {
 	// Initialise Heap
 	h := make(Heap, 0)
 	heap.Init(&h)
