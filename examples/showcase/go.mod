@@ -2,6 +2,6 @@ module showcase
 
 go 1.14
 
-replace github.com/nadav-rahimi/dominant-colour => ../../
+replace github.com/fiwippi/go-quantise => ../../
 
-require github.com/nadav-rahimi/dominant-colour v0.0.0-20210123030738-00d02edf9ea9
+require github.com/fiwippi/go-quantise v0.0.0-20210320185730-1007c930aac0

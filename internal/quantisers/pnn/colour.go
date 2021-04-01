@@ -2,7 +2,7 @@ package pnn
 
 import (
 	"container/heap"
-	"github.com/nadav-rahimi/dominant-colour/pkg/colours"
+	"github.com/fiwippi/go-quantise/pkg/colours"
 	"image"
 	"image/color"
 	"math"

@@ -1,7 +1,7 @@
 package pnn
 
 import (
-	"github.com/nadav-rahimi/dominant-colour/internal/quantisers/pnn"
+	"github.com/fiwippi/go-quantise/internal/quantisers/pnn"
 	"image"
 	"image/color"
 )
