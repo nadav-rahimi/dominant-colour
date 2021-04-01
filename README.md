@@ -47,3 +47,6 @@ Due to limitations of each algorithm:
 
 Sections of this code are adapted from Miller Chan's code found [here](`https://github.com/mcychan/nQuantCpp). 
 A big thank you to him for his help in explaining sections of it.
+
+## License
+`MIT`
