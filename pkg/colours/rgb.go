@@ -1,13 +1,12 @@
 package colours
 
-// RGB Data
+// RGB Data, range 0-255
 type RGB struct {
 	R, G, B float64
 }
 
 // Scales RGB colours in the range [0, 1]
 func (rgb *RGB) scale() (r, g, b float64) {
-	// Scaling down uint8 values to be in the range [0, 1]
 	r = rgb.R / 255
 	g = rgb.G / 255
 	b = rgb.B / 255

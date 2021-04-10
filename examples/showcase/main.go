@@ -13,12 +13,11 @@ import (
 )
 
 var err error
+var randomImg bool
 var img image.Image
 var paletteSize int
 
 func main() {
-	var randomImg bool
-
 	flag.BoolVar(&randomImg, "random", false, "Whether to use a random image instead of the supplied one")
 	flag.IntVar(&paletteSize, "palette-size", 7, "The size of the palette you want to generate")
 	flag.Parse()
@@ -42,7 +41,7 @@ func OtsuExample() {
 	fmt.Println("Creating Otsu...")
 
 	colours := otsu.QuantiseGreyscale(img)
-	quantisedImg, _ := quantisers.ImageFromPalette(img, colours)
+	quantisedImg, _ := quantisers.ImageFromPalette(img, colours, false)
 	palette := quantisers.ColourPaletteImage(colours, 200)
 	SaveJPEG("otsu-grey.jpg", quantisedImg)
 	SaveJPEG("otsu-grey-palette.jpg", palette)
@@ -55,16 +54,18 @@ func LMQExample() {
 
 	// Greyscale Image Single Tone
 	colours := lmq.QuantiseGreyscale(img, 1)
-	quantisedImg, _ := quantisers.ImageFromPalette(img, colours)
+	quantisedImg, _ := quantisers.ImageFromPalette(img, colours, false)
 	palette := quantisers.ColourPaletteImage(colours, 200)
 	SaveJPEG("lmq-grey-single.jpg", quantisedImg)
 	SaveJPEG("lmq-grey-single-palette.jpg", palette)
 
 	// Greyscale Image Multi Tone
 	colours = lmq.QuantiseGreyscale(img, paletteSize)
-	quantisedImg, _ = quantisers.ImageFromPalette(img, colours)
+	quantisedImg, _ = quantisers.ImageFromPalette(img, colours, false)
+	quantisedImgDithered, _ := quantisers.ImageFromPalette(img, colours, true)
 	palette = quantisers.ColourPaletteImage(colours, 200)
 	SaveJPEG("lmq-grey-multi.jpg", quantisedImg)
+	SaveJPEG("lmq-grey-multi-dithered.jpg", quantisedImgDithered)
 	SaveJPEG("lmq-grey-multi-palette.jpg", palette)
 
 	fmt.Println("Finished LMQ")
@@ -75,23 +76,27 @@ func PNNExample() {
 
 	// Greyscale Image Single Tone
 	colours := pnn.QuantiseGreyscale(img, 1)
-	quantisedImg, _ := quantisers.ImageFromPalette(img, colours)
+	quantisedImg, _ := quantisers.ImageFromPalette(img, colours, false)
 	palette := quantisers.ColourPaletteImage(colours, 200)
 	SaveJPEG("pnn-grey-single.jpg", quantisedImg)
 	SaveJPEG("pnn-grey-single-palette.jpg", palette)
 
 	// Greyscale Image Multi Tone
 	colours = pnn.QuantiseGreyscale(img, paletteSize)
-	quantisedImg, _ = quantisers.ImageFromPalette(img, colours)
+	quantisedImg, _ = quantisers.ImageFromPalette(img, colours, false)
+	quantisedImgDithered, _ := quantisers.ImageFromPalette(img, colours, true)
 	palette = quantisers.ColourPaletteImage(colours, 200)
 	SaveJPEG("pnn-grey-multi.jpg", quantisedImg)
+	SaveJPEG("pnn-grey-multi-dithered.jpg", quantisedImgDithered)
 	SaveJPEG("pnn-grey-multi-palette.jpg", palette)
 
 	// Colour Image Multi Tone
 	colours = pnn.QuantiseColour(img, paletteSize)
-	quantisedImg, _ = quantisers.ImageFromPalette(img, colours)
+	quantisedImg, _ = quantisers.ImageFromPalette(img, colours, false)
+	quantisedImgDithered, _ = quantisers.ImageFromPalette(img, colours, true)
 	palette = quantisers.ColourPaletteImage(colours, 200)
 	SaveJPEG("pnn-colour-multi.jpg", quantisedImg)
+	SaveJPEG("pnn-colour-multi-dithered.jpg", quantisedImgDithered)
 	SaveJPEG("pnn-colour-multi-palette.jpg", palette)
 
 	fmt.Println("Finished PNN")
@@ -104,9 +109,11 @@ func PNNLABExample() {
 
 	// Colour Image Multi Tone
 	colours := pnnlab.QuantiseColour(img, paletteSize)
-	quantisedImg, _ := quantisers.ImageFromPalette(img, colours)
+	quantisedImg, _ := quantisers.ImageFromPalette(img, colours, false)
+	quantisedImgDithered, _ := quantisers.ImageFromPalette(img, colours, true)
 	palette := quantisers.ColourPaletteImage(colours, 200)
 	SaveJPEG("pnnlab-colour-multi.jpg", quantisedImg)
+	SaveJPEG("pnnlab-colour-multi-dithered.jpg", quantisedImgDithered)
 	SaveJPEG("pnnlab-colour-multi-palette.jpg", palette)
 
 	fmt.Println("Finished PNN LAB")

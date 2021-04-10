@@ -16,7 +16,7 @@ img, _, _ := image.Decode(reader)
 
 // Quantise the image with PNN
 colours := pnn.QuantiseColour(img, 10)
-quantisedImg, _ := quantisers.ImageFromPalette(img, colours)
+quantisedImg, _ := quantisers.ImageFromPalette(img, colours, true)
 paletteImg := quantisers.ColourPaletteImage(colours, 200)
 
 // Save the recreated image
@@ -32,7 +32,11 @@ png.Encode(savedImg, palette)
 ### Input
 ![input](assets/fish.jpg)
 ### Output
+#### Raw
 ![output](assets/fish-quantised.jpg)
+#### Dithered
+![output-dithered](assets/fish-quantised-dithered.jpg)
+#### Palette
 ![output palette](assets/fish-palette.jpg)
 
 ### Notes
@@ -44,6 +48,8 @@ The algorithms implemented from the paper are:
 Due to limitations of each algorithm:
 - Otsu only supports greyscale quantisation with `m = 1`
 - LMQ only supports greyscale quantisation
+
+The dithering algorithm used is [Floyd–Steinberg dithering](https://en.wikipedia.org/wiki/Floyd%E2%80%93Steinberg_dithering). Images with `m = 1` do not dither.
 
 Sections of this code are adapted from Miller Chan's code found [here](`https://github.com/mcychan/nQuantCpp). 
 A big thank you to him for his help in explaining sections of it.
