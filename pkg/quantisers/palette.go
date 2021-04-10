@@ -8,6 +8,11 @@ import (
 	"reflect"
 )
 
+var (
+	BLACK = color.Gray{0}
+	WHITE = color.Gray{255}
+)
+
 // Recreates image from colour palette. If one greyscale colour is
 // specified then the image is recreated in black and white with the
 // split between them at the specified input colour
@@ -23,26 +28,20 @@ func ImageFromPalette(img image.Image, c color.Palette) (image.Image, error) {
 
 	for y := bounds.Min.Y; y < height; y++ {
 		for x := bounds.Min.X; x < width; x++ {
-			r, g, b, a := img.At(x, y).RGBA()
-
-			// Convert rgb values to be in range 0-255
-			r = r >> 8
-			g = g >> 8
-			b = b >> 8
-			a = a >> 8
-
-			pixelColour := color.RGBA{uint8(r), uint8(g), uint8(b), uint8(a)}
-
 			if len(c) > 1 {
-				cimg.Set(x, y, c.Convert(pixelColour))
+				cimg.Set(x, y, c.Convert(img.At(x, y)))
 			} else if reflect.TypeOf(c[0]) == reflect.TypeOf(color.Gray{}) {
-				Y := c[0].(color.Gray).Y
+				// Get the 8bit RGBA colours and calculate the greyscale equivalent
+				r, g, b, _ := img.At(x, y).RGBA()
+				r, g, b = r>>8, g>>8, b>>8
 				greyscaleLevel := uint8(0.299*float64(r) + 0.587*float64(g) + 0.114*float64(b))
+				// Get the Y threshold
+				Y := c[0].(color.Gray).Y
 
 				if greyscaleLevel <= Y {
-					cimg.Set(x, y, color.Gray{0})
+					cimg.Set(x, y, BLACK)
 				} else {
-					cimg.Set(x, y, color.Gray{255})
+					cimg.Set(x, y, WHITE)
 				}
 			} else {
 				return nil, errors.New("Invalid colour palette")

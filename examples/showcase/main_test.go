@@ -1,15 +1,14 @@
 package main
 
 import (
-	"github.com/nadav-rahimi/dominant-colour/pkg/quantisers/lmq"
-	"github.com/nadav-rahimi/dominant-colour/pkg/quantisers/otsu"
-	"github.com/nadav-rahimi/dominant-colour/pkg/quantisers/pnn"
-	"github.com/nadav-rahimi/dominant-colour/pkg/quantisers/pnnlab"
-	"showcase/pkg/images"
+	"github.com/fiwippi/go-quantise/pkg/quantisers/lmq"
+	"github.com/fiwippi/go-quantise/pkg/quantisers/otsu"
+	"github.com/fiwippi/go-quantise/pkg/quantisers/pnn"
+	"github.com/fiwippi/go-quantise/pkg/quantisers/pnnlab"
 	"testing"
 )
 
-var benchImg, _ = images.ReadImage("bin/fish.jpg")
+var benchImg, _ = ReadImage("fish.jpg")
 
 func BenchmarkOtsuGreySingle(b *testing.B) {
 	otsu.QuantiseGreyscale(benchImg)
