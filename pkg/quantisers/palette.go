@@ -18,7 +18,7 @@ var (
 // split between them at the specified input colour
 func ImageFromPalette(img image.Image, c color.Palette, ditherType DitherType) (image.Image, error) {
 	if c == nil || len(c) < 1 {
-		return nil, errors.New("Colours must be specified")
+		return nil, errors.New("colour palette must be specified")
 	}
 
 	cimg := image.NewRGBA(img.Bounds())
@@ -35,12 +35,16 @@ func ImageFromPalette(img image.Image, c color.Palette, ditherType DitherType) (
 		return noDitherMulti(cimg, c), nil
 	case FloydSteinberg:
 		return floydSteinbergDither(cimg, c), nil
+	case FloydSteinbergSerpentine:
+		return floydSteinbergSerpentineDither(cimg, c), nil
+	case Bayer2x2:
+		return bayerDither2x2(cimg, c), nil
 	case Bayer4x4:
 		return bayerDither4x4(cimg, c), nil
 	case Bayer8x8:
 		return bayerDither8x8(cimg, c), nil
 	default:
-		return nil, errors.New("Invalid dither type")
+		return nil, errors.New("invalid dither type")
 	}
 }
 
@@ -51,8 +55,8 @@ func ColourPaletteImage(c color.Palette, size int) image.Image {
 	img := image.NewRGBA(image.Rect(0, 0, size*numColours, size))
 
 	for i, v := range c {
-		uniform_colour := image.NewUniform(v)
-		draw.Draw(img, image.Rect(size*i, 0, size*i+size, size), uniform_colour, image.Point{}, draw.Src)
+		uniformColour := image.NewUniform(v)
+		draw.Draw(img, image.Rect(size*i, 0, size*i+size, size), uniformColour, image.Point{}, draw.Src)
 	}
 
 	return img

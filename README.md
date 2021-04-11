@@ -47,6 +47,8 @@ The quantisation algorithms implemented from the paper are:
 
 Available dithering algorithms are:
 - Floyd-Steinberg
+- Floyd-Steinberg Serpentine
+- Bayer 2x2 Matrix
 - Bayer 4x4 Matrix
 - Bayer 8x8 Matrix
 

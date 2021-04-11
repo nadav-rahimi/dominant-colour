@@ -7,11 +7,15 @@ import (
 	"math"
 )
 
+// TODO FLoydSteinberd Serpentine Traversal
+
 type DitherType int
 
 const (
 	NoDither DitherType = iota
 	FloydSteinberg
+	FloydSteinbergSerpentine
+	Bayer2x2
 	Bayer4x4
 	Bayer8x8
 )
@@ -56,19 +60,50 @@ func floydSteinbergDither(cimg *image.RGBA, c color.Palette) *image.RGBA {
 	width, height := bounds.Max.X, bounds.Max.Y
 	for y := bounds.Min.Y; y < height; y++ {
 		for x := bounds.Min.X; x < width; x++ {
-			oldColour := cimg.At(x, y)
-			newColour := c.Convert(oldColour)
-			cimg.Set(x, y, newColour)
-
-			rErr, gErr, bErr := fsQuantisedErrors(newColour, oldColour)
-			cimg.Set(x+1, y, fsDiffuseErrors(x+1, y, cimg, rErr, gErr, bErr, 7.0/16))
-			cimg.Set(x-1, y+1, fsDiffuseErrors(x-1, y+1, cimg, rErr, gErr, bErr, 3.0/16))
-			cimg.Set(x, y+1, fsDiffuseErrors(x, y+1, cimg, rErr, gErr, bErr, 5.0/16))
-			cimg.Set(x+1, y+1, fsDiffuseErrors(x+1, y+1, cimg, rErr, gErr, bErr, 1.0/16))
+			floydSteinbergProcess(cimg, c, x, y, true)
 		}
 	}
 
 	return cimg
+}
+
+func floydSteinbergSerpentineDither(cimg *image.RGBA, c color.Palette) *image.RGBA {
+	bounds := cimg.Bounds()
+	width, height := bounds.Max.X, bounds.Max.Y
+	for y := bounds.Min.Y; y < height; y++ {
+		if y%2 == 0 {
+			for x := bounds.Min.X; x < width; x++ {
+				floydSteinbergProcess(cimg, c, x, y, true)
+			}
+		} else {
+			for x := width - 1; x >= 0; x-- {
+				floydSteinbergProcess(cimg, c, x, y, false)
+			}
+		}
+	}
+
+	return cimg
+}
+
+// Forwards = left to right
+// Backwards = right to left
+func floydSteinbergProcess(cimg *image.RGBA, c color.Palette, x, y int, forwards bool) {
+	oldColour := cimg.At(x, y)
+	newColour := c.Convert(oldColour)
+	cimg.Set(x, y, newColour)
+	rErr, gErr, bErr := fsQuantisedErrors(newColour, oldColour)
+
+	if forwards {
+		cimg.Set(x+1, y, fsDiffuseErrors(x+1, y, cimg, rErr, gErr, bErr, 7.0/16))
+		cimg.Set(x-1, y+1, fsDiffuseErrors(x-1, y+1, cimg, rErr, gErr, bErr, 3.0/16))
+		cimg.Set(x, y+1, fsDiffuseErrors(x, y+1, cimg, rErr, gErr, bErr, 5.0/16))
+		cimg.Set(x+1, y+1, fsDiffuseErrors(x+1, y+1, cimg, rErr, gErr, bErr, 1.0/16))
+	} else {
+		cimg.Set(x-1, y, fsDiffuseErrors(x-1, y, cimg, rErr, gErr, bErr, 7.0/16))
+		cimg.Set(x+1, y+1, fsDiffuseErrors(x+1, y+1, cimg, rErr, gErr, bErr, 3.0/16))
+		cimg.Set(x, y+1, fsDiffuseErrors(x, y+1, cimg, rErr, gErr, bErr, 5.0/16))
+		cimg.Set(x-1, y+1, fsDiffuseErrors(x-1, y+1, cimg, rErr, gErr, bErr, 1.0/16))
+	}
 }
 
 func fsDiffuseErrors(x, y int, img *image.RGBA, rErr, gErr, bErr, mul float64) color.Color {
@@ -114,6 +149,11 @@ func averageColourSpread(c color.Palette) float64 {
 	return math.Sqrt(dst) / total
 }
 
+var bayerMatrix2x2 = [][]float64{
+	{0, 2},
+	{3, 1},
+}
+
 var bayerMatrix4x4 = [][]float64{
 	{0, 8, 2, 10},
 	{12, 4, 14, 6},
@@ -132,6 +172,10 @@ var bayerMatrix8x8 = [][]float64{
 	{63, 31, 55, 23, 61, 29, 53, 21},
 }
 
+func bayerDither2x2(cimg *image.RGBA, c color.Palette) *image.RGBA {
+	return bayerDitherWithOpts(cimg, c, bayerMatrix2x2)
+}
+
 func bayerDither4x4(cimg *image.RGBA, c color.Palette) *image.RGBA {
 	return bayerDitherWithOpts(cimg, c, bayerMatrix4x4)
 }
@@ -142,12 +186,13 @@ func bayerDither8x8(cimg *image.RGBA, c color.Palette) *image.RGBA {
 
 func bayerDitherWithOpts(cimg *image.RGBA, c color.Palette, matrix [][]float64) *image.RGBA {
 	rowL := len(matrix[0])
+	mSize := colours.Sqr(float64(rowL))
 	spread := averageColourSpread(c)
 	bounds := cimg.Bounds()
 	width, height := bounds.Max.X, bounds.Max.Y
 	for y := bounds.Min.Y; y < height; y++ {
 		for x := bounds.Min.X; x < width; x++ {
-			m := matrix[x%rowL][y%rowL]/16 - 0.5
+			m := matrix[x%rowL][y%rowL]/mSize - 0.5
 			r, g, b, _ := cimg.At(x, y).RGBA()
 			clr := c.Convert(color.RGBA{
 				R: colours.ClampFloatToUint8(float64(r>>8) + spread*m),

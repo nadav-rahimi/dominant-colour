@@ -42,9 +42,7 @@ func OtsuExample() {
 
 	colours := otsu.QuantiseGreyscale(img)
 	quantisedImg, _ := quantisers.ImageFromPalette(img, colours, quantisers.NoDither)
-	palette := quantisers.ColourPaletteImage(colours, 200)
 	SaveJPEG("otsu-grey.jpg", quantisedImg)
-	SaveJPEG("otsu-grey-palette.jpg", palette)
 
 	fmt.Println("Finished Otsu")
 }
@@ -55,17 +53,13 @@ func LMQExample() {
 	// Greyscale Image Single Tone
 	colours := lmq.QuantiseGreyscale(img, 1)
 	quantisedImg, _ := quantisers.ImageFromPalette(img, colours, quantisers.NoDither)
-	palette := quantisers.ColourPaletteImage(colours, 200)
 	SaveJPEG("lmq-grey-single.jpg", quantisedImg)
-	SaveJPEG("lmq-grey-single-palette.jpg", palette)
 
 	// Greyscale Image Multi Tone
 	colours = lmq.QuantiseGreyscale(img, paletteSize)
 	quantisedImg, _ = quantisers.ImageFromPalette(img, colours, quantisers.NoDither)
-	quantisedImgDithered, _ := quantisers.ImageFromPalette(img, colours, quantisers.Bayer4x4)
-	palette = quantisers.ColourPaletteImage(colours, 200)
+	palette := quantisers.ColourPaletteImage(colours, 200)
 	SaveJPEG("lmq-grey-multi.jpg", quantisedImg)
-	SaveJPEG("lmq-grey-multi-dithered.jpg", quantisedImgDithered)
 	SaveJPEG("lmq-grey-multi-palette.jpg", palette)
 
 	fmt.Println("Finished LMQ")
@@ -77,26 +71,30 @@ func PNNExample() {
 	// Greyscale Image Single Tone
 	colours := pnn.QuantiseGreyscale(img, 1)
 	quantisedImg, _ := quantisers.ImageFromPalette(img, colours, quantisers.NoDither)
-	palette := quantisers.ColourPaletteImage(colours, 200)
 	SaveJPEG("pnn-grey-single.jpg", quantisedImg)
-	SaveJPEG("pnn-grey-single-palette.jpg", palette)
 
 	// Greyscale Image Multi Tone
 	colours = pnn.QuantiseGreyscale(img, paletteSize)
 	quantisedImg, _ = quantisers.ImageFromPalette(img, colours, quantisers.NoDither)
-	quantisedImgDithered, _ := quantisers.ImageFromPalette(img, colours, quantisers.Bayer4x4)
-	palette = quantisers.ColourPaletteImage(colours, 200)
+	palette := quantisers.ColourPaletteImage(colours, 200)
 	SaveJPEG("pnn-grey-multi.jpg", quantisedImg)
-	SaveJPEG("pnn-grey-multi-dithered.jpg", quantisedImgDithered)
 	SaveJPEG("pnn-grey-multi-palette.jpg", palette)
 
 	// Colour Image Multi Tone
 	colours = pnn.QuantiseColour(img, paletteSize)
 	quantisedImg, _ = quantisers.ImageFromPalette(img, colours, quantisers.NoDither)
-	quantisedImgDithered, _ = quantisers.ImageFromPalette(img, colours, quantisers.Bayer4x4)
+	ditheredFS, _ := quantisers.ImageFromPalette(img, colours, quantisers.FloydSteinberg)
+	ditheredFSS, _ := quantisers.ImageFromPalette(img, colours, quantisers.FloydSteinbergSerpentine)
+	ditheredB2x2, _ := quantisers.ImageFromPalette(img, colours, quantisers.Bayer2x2)
+	ditheredB4x4, _ := quantisers.ImageFromPalette(img, colours, quantisers.Bayer4x4)
+	ditheredB8x8, _ := quantisers.ImageFromPalette(img, colours, quantisers.Bayer8x8)
 	palette = quantisers.ColourPaletteImage(colours, 200)
 	SaveJPEG("pnn-colour-multi.jpg", quantisedImg)
-	SaveJPEG("pnn-colour-multi-dithered.jpg", quantisedImgDithered)
+	SaveJPEG("pnn-colour-multi-dithered-floydsteinberg.jpg", ditheredFS)
+	SaveJPEG("pnn-colour-multi-dithered-floydsteinbergserpentine.jpg", ditheredFSS)
+	SaveJPEG("pnn-colour-multi-dithered-bayer2x2.jpg", ditheredB2x2)
+	SaveJPEG("pnn-colour-multi-dithered-bayer4x4.jpg", ditheredB4x4)
+	SaveJPEG("pnn-colour-multi-dithered-bayer8x8.jpg", ditheredB8x8)
 	SaveJPEG("pnn-colour-multi-palette.jpg", palette)
 
 	fmt.Println("Finished PNN")
@@ -110,10 +108,8 @@ func PNNLABExample() {
 	// Colour Image Multi Tone
 	colours := pnnlab.QuantiseColour(img, paletteSize)
 	quantisedImg, _ := quantisers.ImageFromPalette(img, colours, quantisers.NoDither)
-	quantisedImgDithered, _ := quantisers.ImageFromPalette(img, colours, quantisers.Bayer4x4)
 	palette := quantisers.ColourPaletteImage(colours, 200)
 	SaveJPEG("pnnlab-colour-multi.jpg", quantisedImg)
-	SaveJPEG("pnnlab-colour-multi-dithered.jpg", quantisedImgDithered)
 	SaveJPEG("pnnlab-colour-multi-palette.jpg", palette)
 
 	fmt.Println("Finished PNN LAB")
