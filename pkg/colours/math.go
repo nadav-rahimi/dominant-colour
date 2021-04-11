@@ -13,7 +13,7 @@ func Clamp(n, a, b float64) float64 {
 	return n
 }
 
-func ClampUint8(n float64) uint8 {
+func ClampFloatToUint8(n float64) uint8 {
 	if n < 0 {
 		return 0
 	}
