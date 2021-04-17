@@ -4,7 +4,8 @@ Library to quantise images using algorithms from `Virmajoki, O., & Franti, P. (2
 
 ## Install
 ```
-go get github.com/fiwippi/go-quantise
+go get github.com/fiwippi/go-quantise/pkg/quantisers
+go mod tidy
 ```
 
 ## Usage
