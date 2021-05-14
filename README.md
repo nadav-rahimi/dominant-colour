@@ -26,7 +26,7 @@ png.Encode(savedImg, quantisedImg)
 
 // Save the colour palette image
 savedImg, _ = os.Create("fish-palette.jpg")
-png.Encode(savedImg, palette)
+png.Encode(savedImg, paletteImg)
 ```
 
 ## Result 
